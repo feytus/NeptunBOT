@@ -1,1 +1,1 @@
-# ZzzBot
+# Smogy BOT

@@ -1,9 +1,11 @@
+from logging import error
 import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord.ext.commands import has_permissions, MissingPermissions, has_role
 import discord
 import asyncio
+from discord_slash import SlashCommand, SlashContext, error
 #import youtube_dl
 
 
@@ -11,6 +13,7 @@ load_dotenv(dotenv_path="config")
 
 bot = commands.Bot(command_prefix="/")
 bot.remove_command("help")
+slash = SlashCommand(bot, sync_commands=True)
 
 
 image_error="https://i.ibb.co/tHWL83V/acces-denied.png"
@@ -22,7 +25,7 @@ async def on_ready():
     print("Bot prêt !")
 
 
-@bot.command()
+@slash.slash(name="Clear", description="Effacer des messages")
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
     author = ctx.author
@@ -36,8 +39,7 @@ async def clear(ctx, nombre: int):
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     await channel_logs.send(embed=embed)
 
-
-@clear.error
+@error.SlashCommandError
 async def clear_error(ctx, error):
     if isinstance(error, MissingPermissions):
         author = ctx.author
@@ -47,7 +49,7 @@ async def clear_error(ctx, error):
         await author.send(embed=embed)
 
 
-@bot.command()
+@slash.slash(name="Ban", description="Bannir un membre définitivement")
 @has_permissions(ban_members=True)
 async def ban(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -70,7 +72,7 @@ async def ban(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     await ctx.guild.ban(user, reason=reason)
 
 
-@ban.error
+@error.SlashCommandError
 async def ban_error(ctx, error):
     if isinstance(error, MissingPermissions):
         author = ctx.author

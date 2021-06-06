@@ -1,6 +1,7 @@
-git+https://github.com/Rapptz/discord.py
+discord
 dnspython==1.16.0
 python-dotenv==0.15.0
 asyncio==3.4.3
 pynacl
 youtube_dl
+discord-py-slash-command

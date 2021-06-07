@@ -82,7 +82,7 @@ async def ban_error(ctx, error):
         await author.send(embed=embed)
 
 
-@bot.command()
+@slash.slash(name="Kick", description="Effacer des messages")
 @has_permissions(kick_members=True)
 async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -107,9 +107,7 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     await user.send(embed=embed_user)
     await ctx.guild.kick(user, reason=reason)
 
-
-
-@kick.error
+@error.SlashCommandError
 async def kick_error(ctx, error):
     if isinstance(error, MissingPermissions):
         author = ctx.author
@@ -119,7 +117,7 @@ async def kick_error(ctx, error):
         await author.send(embed=embed)
 
 
-@bot.command()
+@slash.slash(name="Unban", description="De-bannir un membre")
 @has_permissions(ban_members=True)
 async def unban(ctx, user, *, reason="Aucune raison donnée"):
 	reason = " ".join(reason)
@@ -134,7 +132,7 @@ async def unban(ctx, user, *, reason="Aucune raison donnée"):
 	await author.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
 
 
-@unban.error
+@error.SlashCommandError
 async def unban_error(ctx, error):
     if isinstance(error, MissingPermissions):
         author = ctx.author
@@ -145,8 +143,7 @@ async def unban_error(ctx, error):
         await author.send(embed=embed)
 
 
-
-@bot.command()
+@slash.slash(name="Tempban", description="Bannir temporairement un membre")
 @has_permissions(ban_members=True)
 async def tempban(ctx, user: discord.User, duration: int, time, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -291,8 +288,7 @@ async def tempban(ctx, user: discord.User, duration: int, time, *, reason="Aucun
         embed.add_field(name="mois", value="mois", inline=True)
         await ctx.send(embed=embed)
 
-
-@tempban.error
+@error.SlashCommandError
 async def tempban_error(ctx, error):
     if isinstance(error, MissingPermissions):
         author = ctx.author
@@ -307,7 +303,6 @@ async def createRoleMute(ctx):
     for channel in ctx.guild.channels:
         await channel.set_permissions(role_mute, send_messages=False, speak= False)
 
-
 async def getRoleMute(ctx):
     roles = ctx.guild.roles
     for role in roles:
@@ -316,7 +311,7 @@ async def getRoleMute(ctx):
 
     return await createRoleMute(ctx)
 
-@bot.command()
+@slash.slash(name="Tempmute", description="Rendre muet temporairement un membre")
 @has_permissions(manage_roles=True)
 async def tempmute(ctx, user: discord.User, duration: int, time, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -447,8 +442,9 @@ async def tempmute(ctx, user: discord.User, duration: int, time, *, reason="Aucu
         embed.add_field(name="j", value="jour(s)", inline=True)
         embed.add_field(name="mois", value="mois", inline=True)
         await ctx.send(embed=embed)
+    await ctx.send("Sanction appliqué :white_check_mark:")
 
-@tempmute.error
+@error.SlashCommandError
 async def tempmute_error(ctx, error):
     if isinstance(error, MissingPermissions):
         author = ctx.author
@@ -457,7 +453,7 @@ async def tempmute_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
-@bot.command()
+@slash.slash(name="Unmute", description="Rendre muet temporairement un membre")
 @has_permissions(manage_roles=True)
 async def unmute(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -480,8 +476,7 @@ async def unmute(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     embed_user.add_field(name="Modérateur", value=f"vous avez été démute par {ctx.author.mention}", inline=True)
     await user.send(embed=embed_user)
 
-
-@unmute.error
+@error.SlashCommandError
 async def unmute_error(ctx, error):
     if isinstance(error, MissingPermissions):
         author = ctx.author
@@ -490,7 +485,7 @@ async def unmute_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
-@bot.command()
+@slash.slash(name="help", description="Permet de voir la liste de toute les commandes")
 async def help(ctx):
     author= ctx.author
     embed= discord.Embed(title="Liste des commandes", color=0x4287f5)
@@ -504,13 +499,11 @@ async def help(ctx):
     embed.set_thumbnail(url="https://i.ibb.co/VHr8hn9/014-brain.png")
     await author.send(embed=embed)
 
-
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CommandNotFound):
-        await ctx.send("Commande inconnue faites **/help**")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+#@bot.event
+#async def on_slash_command_error(ctx, error):
+#    if isinstance(error, commands.errors.CommandNotFound):
+#        await ctx.send("Commande inconnue faites **/help**")
+#    elif isinstance(error, commands.MissingRequiredArgument):
+#       await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
 
 bot.run(os.getenv("TOKEN"))

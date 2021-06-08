@@ -1,14 +1,23 @@
+<<<<<<< HEAD
+from logging import error
+=======
 import asyncio
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e
 import os
 from datetime import time
 from logging import error
 
 import discord
+<<<<<<< HEAD
+import asyncio
+from discord_slash import SlashCommand, SlashContext, error
+=======
 from discord.ext import commands
 from discord.ext.commands import MissingPermissions, has_permissions, has_role
 from discord_slash import SlashCommand, SlashContext, error
 from dotenv import load_dotenv
 
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e
 
 load_dotenv(dotenv_path="config")
 
@@ -16,6 +25,7 @@ bot = commands.Bot(command_prefix="/")
 bot.remove_command("help")
 slash = SlashCommand(bot, sync_commands=True)
 
+channel_logs = bot.get_channel(848578058906238996)
 
 image_error="https://i.ibb.co/tHWL83V/acces-denied.png"
 image_acces="https://i.ibb.co/nPwnQmL/9up7-T4j-Imgur.png"
@@ -23,7 +33,11 @@ image_acces="https://i.ibb.co/nPwnQmL/9up7-T4j-Imgur.png"
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game('twitch.tv/smogyyyy'))
+<<<<<<< HEAD
+    print("Bot prêt !\n")
+=======
     print("Bot prêt !")
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e
 
 @slash.slash(name="Clear", description="Effacer des messages")
 @has_permissions(manage_messages=True)
@@ -38,8 +52,12 @@ async def clear(ctx, nombre: int):
     embed.set_thumbnail(url=image_acces)
     embed.add_field(name="Modérateur", value=author.mention, inline=True)
     await channel_logs.send(embed=embed)
+    await ctx.send(embed=discord.Embed(description=f"Le channel **{channel}** a été clear :white_check_mark:", color=0x34eb37), hidden=True)
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e
 @error.SlashCommandError
 async def clear_error(ctx, error):
     if isinstance(error, MissingPermissions):
@@ -49,6 +67,10 @@ async def clear_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e
 @slash.slash(name="Ban", description="Bannir un membre définitivement")
 @has_permissions(ban_members=True)
 async def ban(ctx, user: discord.User, *, reason="Aucune raison donnée"):
@@ -70,7 +92,13 @@ async def ban(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     await user.send(embed=embed_user)
     await ctx.guild.ban(user, reason=reason)
+    await ctx.send(embed=discord.Embed(description=f"Vous avez banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
+<<<<<<< HEAD
+
+
+=======
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e
 @error.SlashCommandError
 async def ban_error(ctx, error):
     if isinstance(error, MissingPermissions):
@@ -99,12 +127,13 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
                                            "Si la raison de votre kick vous semble incorrecte, "
                                            "vous pouvez contacter le modérateur qui vous a kick"
                                            "vous pouvez revenir sur le serveur via le lien ci-dessous.", color=0xcc0202)
-    embed_user.set_thumbnail(url=image_acces)
+    embed_user.set_thumbnail(url=image_error)
     embed_user.add_field(name="Raison", value=reason, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
     await user.send(embed=embed_user)
     await ctx.guild.kick(user, reason=reason)
+    await ctx.send(embed=discord.Embed(description=f"Vous avez kick **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
 @error.SlashCommandError
 async def kick_error(ctx, error):
@@ -115,21 +144,30 @@ async def kick_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
-
 @slash.slash(name="Unban", description="De-bannir un membre")
 @has_permissions(ban_members=True)
 async def unban(ctx, user, *, reason="Aucune raison donnée"):
-	reason = " ".join(reason)
-	userName, userId = user.split("#")
-	bannedUsers = await ctx.guild.bans()
-	for i in bannedUsers:
-		if i.user.name == userName and i.user.discriminator == userId:
-			await ctx.guild.unban(i.user, reason = reason)
-			await ctx.author.send(f"{user} à été unban.")
-			return
+    channel_logs = bot.get_channel(848578058906238996)
+    banned_users = await ctx.guild.bans()
+    unban_user = discord.Embed(title=f"Vous avez été de-banni", color=0x34eb37)
+    unban_user.add_field(name="Raison", value=reason, inline=True)
+    unban_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
+    unban_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
+    unban_logs = discord.Embed(description=f"**{user}** a été débanni", color=0x34eb37)
+    unban_logs.set_thumbnail(url=image_acces)
+    user_name, user_discriminator = user.split('#')
+    for ban_entry in banned_users:
+        user = ban_entry.user
+        if (user.name, user.discriminator) == (user_name, user_discriminator):
+            await ctx.guild.unban(user, reason=reason)
+            await ctx.user.send(embed=unban_user)
+            await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37))
+            await channel_logs.send(embed=unban)
+=======
 	#Ici on sait que lutilisateur na pas ete trouvé
 	await ctx.author.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
 
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e
 
 @error.SlashCommandError
 async def unban_error(ctx, error):
@@ -486,7 +524,7 @@ async def unmute_error(ctx, error):
 
 @slash.slash(name="help", description="Permet de voir la liste de toute les commandes")
 async def help(ctx):
-    author= ctx.author
+    author = ctx.author
     embed= discord.Embed(title="Liste des commandes", color=0x4287f5)
     embed.add_field(name="/ban [@user] [raison:optionnelle]", value="```Permet de bannir définitivement un membre```", inline=False)
     embed.add_field(name="/tempban [@user] [temps de ban (EN NOMBRE) exemple : 1 ; 13 ; 21] [unité du temps de ban exemple : s; h; j; mois] [raison:optionnelle]", value="```Permet de bannir temporairement un membre```", inline=False)
@@ -498,6 +536,16 @@ async def help(ctx):
     embed.set_thumbnail(url="https://i.ibb.co/VHr8hn9/014-brain.png")
     await author.send(embed=embed)
 
+<<<<<<< HEAD
+#@bot.event
+#async def on_slash_command_error(ctx, error):
+#    if isinstance(error, commands.errors.CommandNotFound):
+#        await ctx.send("Commande inconnue faites **/help**")
+#    elif isinstance(error, commands.MissingRequiredArgument):
+#       await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+
+bot.run(os.getenv("TOKEN"))
+=======
 @bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.errors.CommandNotFound):
@@ -506,3 +554,4 @@ async def on_slash_command_error(ctx, error):
         await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
 
 bot.run(os.getenv("TOKEN"))
+>>>>>>> b61fcbcba88991907056b22c8c0358083463fc2e

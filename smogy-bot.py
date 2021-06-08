@@ -1,12 +1,13 @@
-from logging import error
-import os
-from dotenv import load_dotenv
-from discord.ext import commands
-from discord.ext.commands import has_permissions, MissingPermissions, has_role
-import discord
 import asyncio
+import os
+from datetime import time
+from logging import error
+
+import discord
+from discord.ext import commands
+from discord.ext.commands import MissingPermissions, has_permissions, has_role
 from discord_slash import SlashCommand, SlashContext, error
-#import youtube_dl
+from dotenv import load_dotenv
 
 
 load_dotenv(dotenv_path="config")
@@ -24,7 +25,6 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game('twitch.tv/smogyyyy'))
     print("Bot prêt !")
 
-
 @slash.slash(name="Clear", description="Effacer des messages")
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
@@ -36,8 +36,9 @@ async def clear(ctx, nombre: int):
         await message.delete()
     embed = discord.Embed(title=f"Le channel "f"#{channel}" " a été clear !", color=0xe6de00)
     embed.set_thumbnail(url=image_acces)
-    embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
+    embed.add_field(name="Modérateur", value=author.mention, inline=True)
     await channel_logs.send(embed=embed)
+
 
 @error.SlashCommandError
 async def clear_error(ctx, error):
@@ -47,7 +48,6 @@ async def clear_error(ctx, error):
                               description=f"{author.mention} Vous devez avoir la permission : **manage_messages**", color=0xf09400)
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
-
 
 @slash.slash(name="Ban", description="Bannir un membre définitivement")
 @has_permissions(ban_members=True)
@@ -70,7 +70,6 @@ async def ban(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     await user.send(embed=embed_user)
     await ctx.guild.ban(user, reason=reason)
-
 
 @error.SlashCommandError
 async def ban_error(ctx, error):
@@ -126,10 +125,10 @@ async def unban(ctx, user, *, reason="Aucune raison donnée"):
 	for i in bannedUsers:
 		if i.user.name == userName and i.user.discriminator == userId:
 			await ctx.guild.unban(i.user, reason = reason)
-			await author.send(f"{user} à été unban.")
+			await ctx.author.send(f"{user} à été unban.")
 			return
 	#Ici on sait que lutilisateur na pas ete trouvé
-	await author.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
+	await ctx.author.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
 
 
 @error.SlashCommandError
@@ -499,11 +498,11 @@ async def help(ctx):
     embed.set_thumbnail(url="https://i.ibb.co/VHr8hn9/014-brain.png")
     await author.send(embed=embed)
 
-#@bot.event
-#async def on_slash_command_error(ctx, error):
-#    if isinstance(error, commands.errors.CommandNotFound):
-#        await ctx.send("Commande inconnue faites **/help**")
-#    elif isinstance(error, commands.MissingRequiredArgument):
-#       await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+@bot.event
+async def on_slash_command_error(ctx, error):
+    if isinstance(error, commands.errors.CommandNotFound):
+        await ctx.send("Commande inconnue faites **/help**")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
 
 bot.run(os.getenv("TOKEN"))

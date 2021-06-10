@@ -13,11 +13,10 @@ from discord.ext.commands import MissingPermissions, has_permissions, has_role
 from discord_slash import SlashCommand, SlashContext, error
 from dotenv import load_dotenv
 
-
 load_dotenv(dotenv_path="config")
 
 bot = commands.Bot(command_prefix="/")
-bot.remove_command("help")
+bot.remove_command("help") # removing default command /help
 slash = SlashCommand(bot, sync_commands=True)
 
 channel_logs = bot.get_channel(848578058906238996)
@@ -27,7 +26,7 @@ image_acces="https://i.ibb.co/nPwnQmL/9up7-T4j-Imgur.png"
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game('twitch.tv/smogyyyy'))
+    await bot.change_presence(activity=discord.Streaming(name="twitch.tv/Smogyyyy", url="https://www.twitch.tv/Smogyyyy"))
     print("Bot prêt !")
 
 @slash.slash(name="Clear", description="Effacer des messages")
@@ -43,9 +42,7 @@ async def clear(ctx, nombre: int):
     embed.set_thumbnail(url=image_acces)
     embed.add_field(name="Modérateur", value=author.mention, inline=True)
     await channel_logs.send(embed=embed)
-    await ctx.send(embed=discord.Embed(description=f"Le channel **{channel}** a été clear :white_check_mark:", color=0x34eb37), hidden=True)
-
-
+    await author.send(embed=discord.Embed(description=f"Le channel **{channel}** a été clear :white_check_mark:", color=0x34eb37))
 
 @error.SlashCommandError
 async def clear_error(ctx, error):
@@ -92,7 +89,7 @@ async def ban_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="Kick", description="Effacer des messages")
+@slash.slash(name="Kick", description="Exclure un membre")
 @has_permissions(kick_members=True)
 async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -128,7 +125,7 @@ async def kick_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="Unban", description="De-bannir un membre")
+@slash.slash(name="Unban", description="De-bannir un membre, usage : /unban [user: (exemple: **Feytus#1274**)] [raison:optionnelle]")
 @has_permissions(ban_members=True)
 async def unban(ctx, user, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -164,7 +161,7 @@ async def unban_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="Tempban", description="Bannir temporairement un membre")
+@slash.slash(name="Tempban", description="Bannir temporairement un membre, usage: /tempban [@user] [temps de ban (EN NOMBRE) exemple : 1 ; 13 ; 21] [unité du temps de ban exemple : s (pour seconde); h (pour heure); j (pour jours); mois] [raison:optionnelle]")
 @has_permissions(ban_members=True)
 async def tempban(ctx, user: discord.User, duration: int, time, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -343,7 +340,7 @@ async def getRoleMute(ctx):
 
     return await createRoleMute(ctx)
 
-@slash.slash(name="Tempmute", description="Rendre muet temporairement un membre")
+@slash.slash(name="Tempmute", description="Rendre muet temporairement un membre, usage: /tempmute [@user] [temps de mute (EN NOMBRE) exemple : 1 ; 13 ; 21] [unité du temps de ban exemple : s (pour seconde); h (pour heure); j (pour jours); mois] [raison:optionnelle]")
 @has_permissions(manage_roles=True)
 async def tempmute(ctx, user: discord.User, duration: int, time, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -490,15 +487,15 @@ async def tempmute_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="Unmute", description="Rendre muet temporairement un membre")
+@slash.slash(name="Unmute", description="Ne plus rendre muet temporairement un membre")
 @has_permissions(manage_roles=True)
 async def unmute(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     channel_logs = bot.get_channel(848578058906238996)
     author = ctx.author
     role_mute = await getRoleMute(ctx)
-    await user.add_roles(role_mute, reason=reason)
-    await user.remove_roles(role_mute, reason="Fin de la période de mute")
+
+    await user.remove_roles(role_mute, reason=reason)
     embed = discord.Embed(title=f"{user} été de-mute !",
                               description="Il peut maintenant re-parler dans le chat !",
                               color=0x42f557)
@@ -536,7 +533,6 @@ async def help(ctx):
     embed.add_field(name="/unmute [@user] [raison:optionnelle]", value="```Permet de demute un membre```", inline=False)
     embed.set_thumbnail(url="https://i.ibb.co/VHr8hn9/014-brain.png")
     await ctx.send(embed=embed, hidden=True)
-
 @bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.errors.CommandNotFound):

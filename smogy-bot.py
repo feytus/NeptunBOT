@@ -126,10 +126,10 @@ async def unban(ctx, user, *, reason="Aucune raison donnée"):
 	for i in bannedUsers:
 		if i.user.name == userName and i.user.discriminator == userId:
 			await ctx.guild.unban(i.user, reason = reason)
-			await author.send(f"{user} à été unban.")
+			await ctx.author.send(f"{user} à été unban.")
 			return
 	#Ici on sait que lutilisateur na pas ete trouvé
-	await author.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
+	await ctx.author.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
 
 
 @error.SlashCommandError

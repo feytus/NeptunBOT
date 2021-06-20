@@ -1,30 +1,20 @@
 from logging import error
 import asyncio
 import os
-<<<<<<< HEAD
 import datetime
-=======
-from datetime import time
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
 from logging import error
 
 import discord
 import asyncio
-<<<<<<< HEAD
 from discord.channel import TextChannel
-=======
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
 
 from discord_slash import SlashCommand, SlashContext, error
 from discord.ext import commands
 from discord.ext.commands import MissingPermissions, has_permissions, has_role
 from discord_slash import SlashCommand, SlashContext, error
 from dotenv import load_dotenv
-<<<<<<< HEAD
 
 print(datetime.datetime.now())
-=======
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
 
 load_dotenv(dotenv_path="config")
 
@@ -33,11 +23,7 @@ default_intents.members=True
 
 bot = commands.Bot(command_prefix="/")
 bot.remove_command("help") # removing default command /help
-<<<<<<< HEAD
 slash = SlashCommand(bot)
-=======
-slash = SlashCommand(bot, sync_commands=True)
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
 
 channel_logs = bot.get_channel(848578058906238996)
 
@@ -50,7 +36,6 @@ async def on_ready():
     await bot.change_presence(activity=discord.Streaming(name="twitch.tv/Smogyyyy", url="https://www.twitch.tv/Smogyyyy"))
     print("Bot prêt !")
 
-<<<<<<< HEAD
 @bot.event
 async def on_member_join(member):
     channel:TextChannel = bot.get_channel(848561158206259211)
@@ -60,8 +45,6 @@ async def on_member_join(member):
     embed.set_footer(text=datetime.datetime.now())
     await channel.send(embed=embed)
 
-=======
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
 @slash.slash(name="Clear", description="Effacer des messages")
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
@@ -74,10 +57,7 @@ async def clear(ctx, nombre: int):
     embed = discord.Embed(title=f"Le channel "f"#{channel}" " a été clear !", color=0xe6de00)
     embed.set_thumbnail(url=image_acces)
     embed.add_field(name="Modérateur", value=author.mention, inline=True)
-<<<<<<< HEAD
     embed.set_footer(text=datetime.datetime.now())
-=======
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
     await channel_logs.send(embed=embed)
     await author.send(embed=discord.Embed(description=f"Le channel **{channel}** a été clear :white_check_mark:", color=0x34eb37))
 
@@ -175,19 +155,13 @@ async def unban(ctx, user, *, reason="Aucune raison donnée"):
     unban_logs.set_thumbnail(url=image_acces)
     unban_logs.add_field(name="Raison", value=reason, inline=True)
     unban_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-<<<<<<< HEAD
     unban_logs.set_footer(text=datetime.datetime.now())
-=======
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
     #embed unban user
     unban_user = discord.Embed(title=f"Vous avez été de-banni", color=0x34eb37)
     unban_user.add_field(name="Raison", value=reason, inline=True)
     unban_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     unban_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
-<<<<<<< HEAD
     unban_user.set_footer(text=datetime.datetime.now())
-=======
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
     unban_user.set_thumbnail(url=image_acces)
     for ban_entry in banned_users:
         user = ban_entry.user
@@ -603,10 +577,7 @@ async def help(ctx):
     embed.add_field(name="/unmute [@user] [raison:optionnelle]", value="```Permet de demute un membre```", inline=False)
     embed.set_thumbnail(url="https://i.ibb.co/VHr8hn9/014-brain.png")
     await ctx.send(embed=embed, hidden=True)
-<<<<<<< HEAD
 
-=======
->>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16
 @bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.errors.CommandNotFound):

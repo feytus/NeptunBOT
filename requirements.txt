@@ -4,4 +4,8 @@ python-dotenv==0.15.0
 asyncio==3.4.3
 pynacl
 youtube_dl
+<<<<<<< HEAD
 discord-py-slash-command
+=======
+discord-py-slash-command
+>>>>>>> 4e71f7cca9efb2db7941ac2042708af064f97e16

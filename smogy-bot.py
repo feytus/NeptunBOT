@@ -13,6 +13,7 @@ from discord.ext.commands import MissingPermissions, has_permissions, has_role
 from discord.flags import Intents
 from discord_slash import SlashCommand, SlashContext, error
 from dotenv import load_dotenv
+from discord_slash.utils.manage_commands import create_option, create_choice
 
 load_dotenv(dotenv_path="config")
 
@@ -51,7 +52,14 @@ async def on_member_join(member):
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel.send(embed=embed)
 
-@slash.slash(name="Clear", description="Effacer des messages")
+@slash.slash(name="Clear", description="Effacer des messages", options=[
+                create_option(
+                    name="nombre",
+                    description="Indiquer le nombre de message à clear",
+                    option_type=4,
+                    required=True),
+             ])
+@has_permissions(manage_roles=True)
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
     author = ctx.author
@@ -77,8 +85,18 @@ async def clear_error(ctx, error):
         await author.send(embed=embed)
 
 
-
-@slash.slash(name="Ban", description="Bannir un membre définitivement")
+@slash.slash(name="Ban", description="Bannir un membre définitivement", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être ban",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="reason",
+                    description="Indiquer la raison du ban",
+                    option_type=3,
+                    required=False),
+             ])
 @has_permissions(ban_members=True)
 async def ban(ctx, user: discord.User, *, raison="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -113,7 +131,19 @@ async def ban_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
-@slash.slash(name="Kick", description="Exclure un membre")
+@slash.slash(name="Kick", description="Exclure un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être kick",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="reason",
+                    description="Indiquer la raison du kick",
+                    option_type=3,
+                    required=False),
+             ])
+@has_permissions(manage_roles=True)
 @has_permissions(kick_members=True)
 async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
@@ -149,7 +179,19 @@ async def kick_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="Unban", description="De-bannir un membre")
+@slash.slash(name="Unban", description="De-bannir un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être unban, sous cette forme exemple ``user#1234``",
+                    option_type=3,
+                    required=True),
+                create_option(
+                    name="raison",
+                    description="Indiquer la raison de l'unban",
+                    option_type=3,
+                    required=False),
+             ])
+@has_permissions(manage_roles=True)
 @has_permissions(ban_members=True)
 async def unban(ctx, user, *, raison="Aucune raison donnée"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
@@ -178,9 +220,51 @@ async def unban_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="Tempban", description="Bannir temporairement un membre")
+@slash.slash(name="Tempban", description="Bannir temporairement un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être ban",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="duration",
+                    description="Cette option doit être un nombre",
+                    option_type=4,
+                    required=True),
+                create_option(
+                    name="time",
+                    description="seconde / minute / heure / mois",
+                    option_type=3,
+                    required=True,
+                    choices=[
+                 create_choice(
+                    name="seconde",
+                    value="s"
+                  ),
+                create_choice(
+                    name="minute",
+                    value="m"
+                  ),
+                create_choice(
+                    name="heure",
+                    value="h"
+                  ),
+                create_choice(
+                    name="jour",
+                    value="j"
+                  ),
+                create_choice(
+                    name="mois",
+                    value="mois"),
+                ]),
+                create_option(
+                    name="raison",
+                    description="Indiquer la raison du ban",
+                    option_type=3,
+                    required=False),
+             ])
 @has_permissions(ban_members=True)
-async def tempban(ctx, user: discord.User, duration: int, time, *, raison="Aucune raison donnée"):
+async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
     author = ctx.author
     if "s" == time:
@@ -367,9 +451,51 @@ async def getRoleMute(ctx):
 
     return await createRoleMute(ctx)
 
-@slash.slash(name="Tempmute", description="Rendre muet temporairement un membre")
+@slash.slash(name="Tempmute", description="Rendre muet temporairement un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être mute",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="duration",
+                    description="Cette option doit être un nombre",
+                    option_type=4,
+                    required=True),
+                create_option(
+                    name="time",
+                    description="seconde / minute / heure / mois",
+                    option_type=3,
+                    required=True,
+                    choices=[
+                 create_choice(
+                    name="seconde",
+                    value="s"
+                  ),
+                create_choice(
+                    name="minute",
+                    value="m"
+                  ),
+                create_choice(
+                    name="heure",
+                    value="h"
+                  ),
+                create_choice(
+                    name="jour",
+                    value="j"
+                  ),
+                create_choice(
+                    name="mois",
+                    value="mois"),
+                ]),
+                create_option(
+                    name="raison",
+                    description="Indiquer la raison du mute",
+                    option_type=3,
+                    required=False),
+             ])
 @has_permissions(manage_roles=True)
-async def tempmute(ctx, user: discord.User, duration: int, time, *, raison="Aucune raison donnée"):
+async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison donnée"):
     channel_logs = bot.get_channel(848578058906238996)
     role_mute = await getRoleMute(ctx)
     author = ctx.author
@@ -525,7 +651,18 @@ async def tempmute_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="Unmute", description="Ne plus rendre muet temporairement un membre")
+@slash.slash(name="Unmute", description="Ne plus rendre muet temporairement un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être unmute",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="raison",
+                    description="Indiquer la raison de l'unmute",
+                    option_type=3,
+                    required=False),
+             ])
 @has_permissions(manage_roles=True)
 async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
@@ -574,7 +711,24 @@ async def help(ctx):
     embed.set_thumbnail(url="https://i.ibb.co/VHr8hn9/014-brain.png")
     await ctx.send(embed=embed, hidden=True)
 
-@slash.slash(name="report", description="Report un membre")
+@slash.slash(name="report", description="Report un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être report",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="raison",
+                    description="Indiquer la raison du mute",
+                    option_type=3,
+                    required=True),
+                create_option(
+                    name="preuve",
+                    description="Indiquer une preuve",
+                    option_type=3,
+                    required=False),
+             ])
+@has_permissions(manage_roles=True)
 async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donnée"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez report **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     channel_logs = await bot.fetch_channel(848578058906238996)
@@ -583,7 +737,7 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
     embed_logs.add_field(name="Preuve", value=preuve)
     embed_logs.set_thumbnail(url=preuve)
     await channel_logs.send(embed=embed_logs)
-
+  
 @bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.errors.CommandNotFound):

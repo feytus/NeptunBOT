@@ -118,7 +118,7 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison donnée"):
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
     await user.send(embed=embed_user)
-    await ctx.guild.ban(user, raison=raison)
+    await ctx.guild.ban(user, reason=raison)
     await ctx.send(embed=discord.Embed(description=f"Vous avez banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
 
@@ -206,7 +206,7 @@ async def unban(ctx, user, *, raison="Aucune raison donnée"):
     for ban_entry in banned_users:
         user = ban_entry.user
         if (user.name, user.discriminator) == (user_name, user_discriminator):
-            await ctx.guild.unban(user, raison=raison)
+            await ctx.guild.unban(user, reason=raison)
             await channel_logs.send(embed=unban_logs)
 
 @error.SlashCommandError
@@ -293,7 +293,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         embed_user.set_thumbnail(url=image_error)
         await user.send(embed=embed_user)
-        await ctx.guild.ban(user, raison=raison)
+        await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration)
         await ctx.guild.unban(user)
     elif "m" == time:
@@ -323,7 +323,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await ctx.guild.ban(user, raison=raison)
+        await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_min)
         await ctx.guild.unban(user)
     elif "h" == time:
@@ -353,7 +353,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await ctx.guild.ban(user, raison=raison)
+        await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_heure)
         await ctx.guild.unban(user)
     elif "j" == time:
@@ -383,7 +383,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await ctx.guild.ban(user, raison=raison)
+        await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_jour)
         await ctx.guild.unban(user)
     elif "mois" == duration:
@@ -413,7 +413,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await ctx.guild.ban(user, raison=raison)
+        await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_mois)
         await ctx.guild.unban(user)
     else:
@@ -521,7 +521,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         embed_user.set_thumbnail(url=image_error)
         await user.send(embed=embed_user)
-        await user.add_roles(role_mute, raison=raison)
+        await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration)
         await user.remove_roles(role_mute, raison="Fin de la période de mute")
     elif "m" == time:
@@ -547,7 +547,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await user.add_roles(role_mute, raison=raison)
+        await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_min)
         await user.remove_roles(role_mute, raison="Fin de la période de mute")
     elif "h" == time:
@@ -573,7 +573,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await user.add_roles(role_mute, raison=raison)
+        await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_heure)
         await user.remove_roles(role_mute, raison="Fin de la période de mute")
     elif "j" == time:
@@ -599,7 +599,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await user.add_roles(role_mute, raison=raison)
+        await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_jour)
         await user.remove_roles(role_mute, raison="Fin de la période de mute")
     elif "mois" == duration:
@@ -625,7 +625,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         await user.send(embed=embed_user)
-        await user.add_roles(role_mute, raison=raison)
+        await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_mois)
         await user.remove_roles(role_mute, raison="Fin de la période de mute")
     else:
@@ -670,7 +670,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
     author = ctx.author
     role_mute = await getRoleMute(ctx)
 
-    await user.remove_roles(role_mute, raison=raison)
+    await user.remove_roles(role_mute, reason=raison)
     embed = discord.Embed(title=f"{user} été de-mute !",
                               description="Il peut maintenant re-parler dans le chat !",
                               color=0x42f557)

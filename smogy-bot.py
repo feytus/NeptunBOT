@@ -7,6 +7,7 @@ from logging import error
 
 import discord
 from discord.channel import TextChannel
+from discord.embeds import Embed
 
 from discord.ext import commands
 from discord.ext.commands import MissingPermissions, has_permissions, has_role
@@ -697,19 +698,6 @@ async def unmute_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
-@slash.slash(name="help", description="Permet de voir la liste de toute les commandes")
-async def help(ctx):
-    author = ctx.author
-    embed= discord.Embed(title="Liste des commandes", color=0x4287f5)
-    embed.add_field(name="/ban [@user] [raison:optionnelle]", value="```Permet de bannir définitivement un membre```", inline=False)
-    embed.add_field(name="/tempban [@user] [temps de ban (EN NOMBRE) exemple : 1 ; 13 ; 21] [unité du temps de ban exemple : s; h; j; mois] [raison:optionnelle]", value="```Permet de bannir temporairement un membre```", inline=False)
-    embed.add_field(name="/unban [user#1234] [raison:optionnelle]", value="```Permet d'unban un membre banni```", inline=False)
-    embed.add_field(name="/clear [nombre de message à supprimer]", value="```Permet de supprimer plusieurs messages```", inline=False)
-    embed.add_field(name="/kick [@user] [raison:optionnelle]", value="```Permet d'exclure un membre```", inline=False)
-    embed.add_field(name="/tempmute [@user] [temps de mute (EN NOMBRE) exemple : 1 ; 13 ; 21] [unité du temps de mute exemple : s; h; j; mois] [raison:optionnelle]", value="```Permet de bannir temporairement un membre```", inline=False)
-    embed.add_field(name="/unmute [@user] [raison:optionnelle]", value="```Permet de demute un membre```", inline=False)
-    embed.set_thumbnail(url="https://i.ibb.co/VHr8hn9/014-brain.png")
-    await ctx.send(embed=embed, hidden=True)
 
 @slash.slash(name="report", description="Report un membre", options=[
                 create_option(
@@ -728,21 +716,158 @@ async def help(ctx):
                     option_type=3,
                     required=False),
              ])
-@has_permissions(manage_roles=True)
 async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donnée"):
-    await ctx.send(embed=discord.Embed(description=f"Vous avez report **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     channel_logs = await bot.fetch_channel(848578058906238996)
-    embed_logs=discord.Embed(title=f"{ctx.auhtor} a report {user}", color=0x4287f5)
-    embed_logs.add_field(name="Raison", value=raison)
-    embed_logs.add_field(name="Preuve", value=preuve)
-    embed_logs.set_thumbnail(url=preuve)
-    await channel_logs.send("embed=embed_logs")
+    await ctx.send(embed=discord.Embed(description=f"Vous avez report **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+    #embed=discord.Embed(title=f"{ctx.auhtor} a report {user}", color=0x42f575)
+    embed = discord.Embed(title=f"{ctx.author} a report {user}", color=0x75ff9d)
+    embed.add_field(name="Raison", value=raison, inline=True)
+    embed.add_field(name="Preuve", value=preuve, inline=True)
+    embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+    embed.set_image(url=preuve)
+    await channel_logs.send(embed=embed)
   
+@slash.slash(name="help", description="Permet de voir la liste de toute les commandes", options=[
+                create_option(
+                    name="command",
+                    description="Renseignement à propos des commandes du bot",
+                    option_type=3,
+                    required=True,
+                    choices=[
+                 create_choice(
+                    name="all commands",
+                    value="all_commands"
+                ),
+                create_choice(
+                    name="clear",
+                    value="clear"
+                  ),
+                create_choice(
+                    name="kick",
+                    value="kick"
+                  ),
+                create_choice(
+                    name="ban",
+                    value="ban"
+                  ),
+                create_choice(
+                    name="unban",
+                    value="unban"
+                  ),
+                create_choice(
+                    name="tempban",
+                    value="tempban"
+                  ),
+                create_choice(
+                    name="tempmute",
+                    value="tempmute"
+                  ),
+                create_choice(
+                    name="unmute",
+                    value="unmute"
+                  ),
+                create_choice(
+                    name="report",
+                    value="report")
+                ]),
+             ])
+async def help(ctx, command):
+    if command == "all_commands":
+        author = ctx.author
+        embed= discord.Embed(title="Liste de toutes les commandes les commandes",
+        color=0x00ffaa)
+        embed.add_field(name="**/clear**"
+        , value="Cette commande permet d'effacer un certains nombre de message, pour plus de renseignement faites **/help clear**", inline=False)
+        embed.add_field(name="**/kick**"
+        , value="Cette commande permet d'expulser un membre du discord, pour plus de renseignement faites **/help kick**", inline=False)
+        embed.add_field(name="**/ban**"
+        , value="Cette commande permet de bannir un membre du discord, pour plus de renseignement faites **/help ban**", inline=False)
+        embed.add_field(name="**/unban**"
+        , value="Cette commande permet de dé-bannir un membre du discord, pour plus de renseignement faites **/help unban**", inline=False)
+        embed.add_field(name="**/tempban**"
+        , value="Cette commande permet de bannir temporairement un membre du discord, pour plus de renseignement faites **/help tempban**", inline=False)
+        embed.add_field(name="**/tempmute**"
+        , value="Cette commande permet de mute temporairement un membre du discord, pour plus de renseignement faites **/help tempmute**", inline=False)
+        embed.add_field(name="**/unmute**"
+        , value="Cette commande permet dé-mute un membre du discord, pour plus de renseignement faites **/help unmute**", inline=False)
+        embed.add_field(name="**/report**"
+        , value="Cette commande permet de report un membre du discord pour plus de renseignement faites **/help report**", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "clear":
+        author = ctx.author
+        embed= discord.Embed(title="Commande clear", description="***/clear***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'effacer un certains nombre de message", inline=False)
+        embed.add_field(name="Utilisation", value="``/clear [nombre de message]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "kick":
+        author = ctx.author
+        embed= discord.Embed(title="Commande kick", description="***/kick***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'expulser un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/kick [membre] [*raison]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "ban":
+        author = ctx.author
+        embed= discord.Embed(title="Commande ban", description="***/ban***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de bannir un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/ban [membre] [*raison]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "unban":
+        author = ctx.author
+        embed= discord.Embed(title="Commande unban", description="***/unban***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de dé-bannir un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/unban [membre] [*raison]`` :warning: l'option **membre** doit être rempli sous cette forme ***user#1234***", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "tempban":
+        author = ctx.author
+        embed= discord.Embed(title="Commande tempban", description="***/tempban***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de bannir temporairement un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/tempban [membre] [durée : nombre] [temps : seconde / minute / heure / jour / mois] [[*raison]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "tempmute":
+        author = ctx.author
+        embed= discord.Embed(title="Commande tempmute", description="***/tempmute***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de mute temporairement un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/tempmute [membre] [durée : nombre] [temps : seconde / minute / heure / jour / mois] [*raison]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "unmute":
+        author = ctx.author
+        embed= discord.Embed(title="Commande tempban", description="***/tempmute***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet dé-mute un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/unmute [membre] [*raison]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "report":
+        author = ctx.author
+        embed= discord.Embed(title="Commande report", description="***/report***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de report un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/report [membre] [raison] [*preuve: url vers une image]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+
 @bot.event
 async def on_slash_command_error(ctx, error):
+    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+        pass
     if isinstance(error, commands.errors.CommandNotFound):
         await ctx.send("Commande inconnue faites **/help**")
     elif isinstance(error, commands.MissingRequiredArgument):
-       await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+        await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+    elif isinstance(error, discord.errors.HTTPException):
+        pass
 
 bot.run(os.getenv("TOKEN"))

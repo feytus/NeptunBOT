@@ -60,21 +60,19 @@ async def on_member_join(member):
                     option_type=4,
                     required=True),
              ])
-@has_permissions(manage_roles=True)
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
-    author = ctx.author
-    channel = ctx.channel
+    await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** est en train d'être clear clear ...", color=0x34eb37))
     channel_logs = bot.get_channel(848578058906238996)
     messages = await ctx.channel.history(limit=nombre + 1).flatten()
     for message in messages:
         await message.delete()
-    embed = discord.Embed(title=f"Le channel "f"#{channel}" " a été clear !", color=0xe6de00)
+    embed = discord.Embed(title=f"Le channel {ctx.channel} a été clear ! :white_check_mark:", color=0xe6de00)
     embed.set_thumbnail(url=image_acces)
-    embed.add_field(name="Modérateur", value=author.mention, inline=True)
+    embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed)
-    await author.send(embed=discord.Embed(description=f"Le channel **{channel}** a été clear :white_check_mark:", color=0x34eb37))
+    await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** a été clear :white_check_mark:", color=0x34eb37), hidden=True)
 
 @error.SlashCommandError
 async def clear_error(ctx, error):

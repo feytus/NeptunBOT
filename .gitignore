@@ -1,3 +1,4 @@
 config
 upload-server.sh
+
 /logs/*.log

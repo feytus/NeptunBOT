@@ -47,6 +47,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Streaming(name="twitch.tv/Smogy", url="https://www.twitch.tv/Smogy"))
     logging.info(f"Bot pret !")
 
+
 @bot.event
 async def on_member_join(member):
     logging.info(f"{member} as join the discord")
@@ -65,6 +66,7 @@ async def on_member_join(member):
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel.send(embed=embed)
 
+
 @slash.slash(name="Clear", description="Effacer des messages", options=[
                 create_option(
                     name="nombre",
@@ -74,7 +76,7 @@ async def on_member_join(member):
              ])
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
-    logging.info(f"{ctx.author} a clear {nombre} dans le channel {ctx.channel}")
+    logging.info(f"{ctx.author} a clear {nombre} messages dans le channel {ctx.channel}")
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0xfff04f
@@ -90,7 +92,7 @@ async def clear(ctx, nombre: int):
     embed = discord.Embed(title=f"Le channel {ctx.channel} a été clear !", color=color)
     embed.set_thumbnail(url=image_acces)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-    embed.add_field(name="Nombre de message supprimés", value=nombre, inline=False)
+    embed.add_field(name="Nombre de messages supprimés", value=nombre, inline=False)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed)
     await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** a été clear :white_check_mark:", color=0x34eb37), hidden=True)
@@ -231,7 +233,6 @@ async def unban(ctx, user, *, raison="Aucune raison donnée"):
             await ctx.guild.unban(user, reason=raison)
             await channel_logs.send(embed=unban_logs)
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-
 
 @error.SlashCommandError
 async def unban_error(ctx, error):
@@ -688,7 +689,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="mois", value="mois", inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
         await ctx.send(embed=embed)
-    
 
 @error.SlashCommandError
 async def tempmute_error(ctx, error):
@@ -834,7 +834,7 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
                 ]),
              ])
 async def help(ctx, command):
-    logging.info(f"{ctx.author} a utiliser la command /help {command}")
+    logging.info(f"{ctx.author} a utilisé la command /help {command}")
     if command == "all_commands":
         author = ctx.author
         embed= discord.Embed(title="Liste de toutes les commandes les commandes",

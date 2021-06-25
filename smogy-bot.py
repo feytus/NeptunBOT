@@ -805,7 +805,7 @@ async def help(ctx, command):
         , value="Cette commande permet de dé-bannir un membre du discord, pour plus de renseignement faites **/help unban**", inline=False)
         embed.add_field(name="``/tempban``"
         , value="Cette commande permet de bannir temporairement un membre du discord, pour plus de renseignement faites **/help tempban**", inline=False)
-        embed.add_field(name="``tempmute``"
+        embed.add_field(name="``/tempmute``"
         , value="Cette commande permet de mute temporairement un membre du discord, pour plus de renseignement faites **/help tempmute**", inline=False)
         embed.add_field(name="``/unmute``"
         , value="Cette commande permet dé-mute un membre du discord, pour plus de renseignement faites **/help unmute**", inline=False)

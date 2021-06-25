@@ -799,7 +799,7 @@ async def help(ctx, command):
         , value="Cette commande permet d'effacer un certains nombre de message, pour plus de renseignement faites **/help clear**", inline=False)
         embed.add_field(name="``/kick``"
         , value="Cette commande permet d'expulser un membre du discord, pour plus de renseignement faites **/help kick**", inline=False)
-        embed.add_field(name="``/ban*``"
+        embed.add_field(name="``/ban``"
         , value="Cette commande permet de bannir un membre du discord, pour plus de renseignement faites **/help ban**", inline=False)
         embed.add_field(name="``/unban``"
         , value="Cette commande permet de dé-bannir un membre du discord, pour plus de renseignement faites **/help unban**", inline=False)

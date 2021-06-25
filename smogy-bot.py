@@ -61,7 +61,7 @@ async def on_member_join(member):
              ])
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
-    await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** est en train d'être clear clear ...", color=0x34eb37))
+    await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** est en train d'être clear ...", color=0x34eb37))
     channel_logs = bot.get_channel(848578058906238996)
     messages = await ctx.channel.history(limit=nombre + 1).flatten()
     for message in messages:
@@ -716,7 +716,7 @@ async def unmute_error(ctx, error):
 async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donnée"):
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
-        color = 0x34eb37
+        color = 0x34ebe5
     elif rand_numb == 2:
         color = 0x2f5da
     elif rand_numb == 3:
@@ -727,9 +727,9 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
     embed.add_field(name="Raison", value=raison, inline=True)
     embed.add_field(name="Preuve", value=preuve, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-    embed.set_image(url=preuve)
+    embed.set_thumbnail(url=preuve)
     await channel_logs.send(embed=embed)
-  
+
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
                     name="command",

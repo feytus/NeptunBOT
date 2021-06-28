@@ -894,7 +894,7 @@ async def help(ctx, command):
         embed= discord.Embed(title="Commande tempban", description="***/tempban***",
         color=0x00ffaa)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de bannir temporairement un membre du discord", inline=False)
-        embed.add_field(name="Utilisation", value="``/tempban [membre] [durée : nombre] [temps : seconde / minute / heure / jour / mois] [[*raison]``", inline=False)
+        embed.add_field(name="Utilisation", value="``/tempban [membre] [durée : nombre] [temps : seconde / minute / heure / jour / mois] [*raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     elif command == "tempmute":
@@ -930,6 +930,5 @@ async def on_slash_command_error(ctx, error):
         await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
     elif isinstance(error, discord.errors.HTTPException):
         pass
-
 
 bot.run(os.getenv("TOKEN"))

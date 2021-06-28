@@ -219,6 +219,7 @@ async def kick_error(ctx, error):
 @has_permissions(ban_members=True)
 async def unban(ctx, user, *, raison="Aucune raison donnée"):
     logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
+
     channel_logs = bot.get_channel(848578058906238996)
     banned_users = await ctx.guild.bans()
     user_name, user_discriminator = user.split('#')
@@ -719,7 +720,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
     author = ctx.author
     role_mute = await getRoleMute(ctx)
 
-    await user.remove_roles(role_mute, reason=raison)
+    await user.remove_roles( role_mute, reason=raison)
     embed = discord.Embed(title=f"{user} été de-mute !",
                               description="Il peut maintenant re-parler dans le chat !",
                               color=0x42f557)

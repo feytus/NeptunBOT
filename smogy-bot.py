@@ -35,6 +35,7 @@ full_date = datetime.datetime.now()
 date = full_date.strftime('%Y-%m-%d:%H:%M:%S')
 
 try:
+    #logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 except FileNotFoundError:
@@ -46,7 +47,6 @@ except FileNotFoundError:
 async def on_ready():
     await bot.change_presence(activity=discord.Streaming(name="twitch.tv/Smogy", url="https://www.twitch.tv/Smogy"))
     logging.info(f"Bot pret !")
-
 
 @bot.event
 async def on_member_join(member):
@@ -215,15 +215,20 @@ async def kick_error(ctx, error):
                     option_type=3,
                     required=False),
              ])
-@has_permissions(manage_roles=True)
 @has_permissions(ban_members=True)
 async def unban(ctx, user, *, raison="Aucune raison donnée"):
+    rand_numb = random.randint(1, 3)
+    if rand_numb == 1:
+        color = 0x32a852
+    elif rand_numb == 2:
+        color = 0x5eff8a
+    elif rand_numb == 3:
+        color = 0x3fc463
     logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
-
     channel_logs = bot.get_channel(848578058906238996)
     banned_users = await ctx.guild.bans()
     user_name, user_discriminator = user.split('#')
-    unban_logs = discord.Embed(title=f"**{user}** a été dé-banni", color=0x34eb37)
+    unban_logs = discord.Embed(title=f"**{user}** a été dé-banni", color=color)
     unban_logs.set_thumbnail(url=image_acces)
     unban_logs.add_field(name="Raison", value=raison, inline=True)
     unban_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -245,6 +250,23 @@ async def unban_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
+@slash.slash(name="banlist", description="Permet d'obtenir la liste des membres bannis")
+@has_permissions(ban_members=True)
+async def banlist(ctx):
+    rand_numb = random.randint(1, 3)
+    if rand_numb == 1:
+        color = 0xc43f3f
+    elif rand_numb == 2:    
+        color = 0xc45e3f
+    elif rand_numb == 3:
+        color = 0xc43f72
+    banned_users_list = await ctx.guild.bans()
+    embed = discord.Embed(title="Voici la liste des membres bannis du discord", color=color)
+    for banned_users in banned_users_list:
+        embed.add_field(name=f"{banned_users.user.name}#{banned_users.user.discriminator}",
+         value=f"Raison du ban : **{banned_users.reason}**, ID : **{banned_users.user.id}**",
+          inline=False)
+    await ctx.send(embed=embed, hidden=True)
 
 @slash.slash(name="Tempban", description="Bannir temporairement un membre", options=[
                 create_option(
@@ -831,7 +853,11 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
                   ),
                 create_choice(
                     name="report",
-                    value="report")
+                    value="report"),
+                create_choice(
+                    name="banlist",
+                    value="banlist"
+                ),
                 ]),
              ])
 async def help(ctx, command):
@@ -856,6 +882,8 @@ async def help(ctx, command):
         , value="Cette commande permet dé-mute un membre du discord, pour plus de renseignement faites **/help unmute**", inline=False)
         embed.add_field(name="``/report``"
         , value="Cette commande permet de report un membre du discord pour plus de renseignement faites **/help report**", inline=False)
+        embed.add_field(name="``/banlist``"
+        , value="Cette commande permet d'obtenir la listes des membres bannis du discord, pour plus de renseignement faites **/help banlist**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     elif command == "clear":
@@ -922,11 +950,19 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/report [membre] [raison] [*preuve: :warning: url vers une image :warning:]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
-
+    elif command == "banlist":
+        author = ctx.author
+        embed= discord.Embed(title="Commande banlist", description="***/banlist***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir la liste des membres bannis du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/banlist``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)      
+    
 @bot.event
 async def on_slash_command_error(ctx, error):
-    if isinstance(error, commands.errors.CommandNotFound):
-        pass
+    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+        logging.error(error)
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
     elif isinstance(error, discord.errors.HTTPException):

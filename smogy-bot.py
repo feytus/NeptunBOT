@@ -835,7 +835,7 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
                 ]),
              ])
 async def help(ctx, command):
-    logging.info(f"{ctx.author} a utilisé la command /help {command}")
+    logging.info(f"{ctx.author} a utilisé la commande /help {command}")
     if command == "all_commands":
         author = ctx.author
         embed= discord.Embed(title="Liste de toutes les commandes les commandes",

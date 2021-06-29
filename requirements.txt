@@ -6,3 +6,4 @@ pynacl
 youtube_dl
 discord-py-slash-command
 logging
+aiofiles

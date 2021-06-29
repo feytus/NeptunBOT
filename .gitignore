@@ -3,3 +3,4 @@ upload-server.sh
 .DS_Store
 
 /logs/*.log
+/sanctions/

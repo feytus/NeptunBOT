@@ -5,8 +5,10 @@ import asyncio
 import os
 import datetime
 import random
+import aiofiles
 
 import discord
+from discord import colour
 from discord.channel import TextChannel
 from discord.embeds import Embed
 
@@ -34,6 +36,8 @@ image_acces="https://i.ibb.co/"
 full_date = datetime.datetime.now()
 date = full_date.strftime('%Y-%m-%d:%H:%M:%S')
 
+bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
+
 try:
     #logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
@@ -45,6 +49,32 @@ except FileNotFoundError:
 
 @bot.event
 async def on_ready():
+    for guild in bot.guilds:
+        bot.warnings[guild.id] = {}
+        
+        try:
+            async with aiofiles.open(f"sanctions/{guild.id}.txt", mode="a") as temp:
+                pass
+        except FileNotFoundError:
+            os.makedirs('sanctions')
+            async with aiofiles.open(f"sanctions/{guild.id}.txt", mode="a") as temp:
+                pass
+
+        async with aiofiles.open(f"sanctions/{guild.id}.txt", mode="r") as file:
+            lines = await file.readlines()
+
+            for line in lines:
+                data = line.split(" ")
+                member_id = int(data[0])
+                admin_id = int(data[1])
+                reason = " ".join(data[2:]).strip("\n")
+
+                try:
+                    bot.warnings[guild.id][member_id][0] += 1
+                    bot.warnings[guild.id][member_id][1].append((admin_id, reason))
+
+                except KeyError:
+                    bot.warnings[guild.id][member_id] = [1, [(admin_id, reason)]]
     await bot.change_presence(activity=discord.Streaming(name="twitch.tv/Smogy", url="https://www.twitch.tv/Smogy"))
     logging.info(f"Bot pret !")
 
@@ -485,7 +515,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="h", value="heure(s)", inline=True)
         embed.add_field(name="j", value="jour(s)", inline=True)
         embed.add_field(name="mois", value="mois", inline=True)
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, hidden=True)
 
 @error.SlashCommandError
 async def tempban_error(ctx, error):
@@ -711,7 +741,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="j", value="jour(s)", inline=True)
         embed.add_field(name="mois", value="mois", inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, hidden=True)
 
 @error.SlashCommandError
 async def tempmute_error(ctx, error):
@@ -748,7 +778,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
                               color=0x42f557)
     embed.set_thumbnail(url=image_acces)
     embed.add_field(name="Raison", value=raison, inline=True)
-    embed.add_field(name="Modérateur", value="ctx.author.mention", inline=True)
+    embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed)
     embed_user = discord.Embed(title="Vous avez été de-mute !",
@@ -756,7 +786,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
                                color=0x42f557)
     embed_user.set_thumbnail(url=image_acces)
     embed_user.add_field(name="Raison", value=raison, inline=True)
-    embed_user.add_field(name="Modérateur", value="ctx.author.mention", inline=True)
+    embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
     await user.send(embed=embed_user)
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
@@ -810,7 +840,90 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
     else:
             pass
     await channel_logs.send(embed=embed)
+
     await ctx.send(embed=discord.Embed(description=f"Vous avez report **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+
+
+@bot.event
+async def on_guild_join(guild):
+    bot.warnings[guild.id] = {}
+
+
+@slash.slash(name="warn", description="Avertir un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être warn",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="raison",
+                    description="Entrez la raison du warn",
+                    option_type=3,
+                    required=True)
+            ])
+@has_permissions(manage_roles=True)
+async def warn(ctx, user: discord.User, raison):
+    rand_numb = random.randint(1, 3)
+    if rand_numb == 1:
+        color = 0xedda5f
+    elif rand_numb == 2:
+        color = 0xedab5f
+    elif rand_numb == 3:
+        color = 0xbb76f5
+    try:
+        bot.warnings[ctx.guild.id][user.id][0] += 1
+        bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, raison))
+    except KeyError:
+        bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, raison)]]
+
+    async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
+        await file.write(f"{user.id} {ctx.author.id} {raison}\n")
+    await ctx.send(embed=discord.Embed(description=f"Vous avez warn **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+    embed_user = discord.Embed(title="Vous avez été warn !", color=color)
+    embed_user.set_thumbnail(url=image_error)
+    embed_user.add_field(name="Raison", value=raison, inline=True)
+    embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
+    embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
+    embed_user = discord.Embed(title="{user} a été warn !", color=color)
+    embed_user.set_thumbnail(url=image_error)
+    embed_user.add_field(name="Raison", value=raison, inline=True)
+    embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
+    embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
+    logging.info(f"{ctx.author} a warn {user}, raison : {raison}")
+
+
+@slash.slash(name="sanctions", description="Permet d'obtenir la liste des sanctions d'un membre", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être warn",
+                    option_type=6,
+                    required=True)
+            ])
+@has_permissions(manage_roles=True)
+async def sanctions(ctx, user: discord.User):
+    rand_numb = random.randint(1, 3)
+    if rand_numb == 1:
+        color = 0x34ebe5
+    elif rand_numb == 2:
+        color = 0x2f5da
+    elif rand_numb == 3:
+        color = 0x42f575
+    try:
+        i = 1
+        embed = discord.Embed(title=f"Listes des sanctions de {user}", description=":warning:",colour=color)
+        for author_id, raison in bot.warnings[ctx.guild.id][user.id][1]:
+            author = ctx.guild.get_member(author_id)
+            embed.add_field(name=f"{i}. Avertissement par **{author}**", value=f"Raison : ``{raison}``", inline=False)
+            embed.set_footer(text=user, icon_url=user.avatar_url)
+            i += 1
+        await ctx.send(embed=embed, hidden=True)
+    except KeyError: # no warnings
+        embed = discord.Embed(title=f"Listes des sanctions de {user}", colour=color, description=f"{user.mention} n'a aucune sanction !")
+        embed.set_footer(text=user, icon_url=user.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+
+    logging.info(f"{ctx.author} a utilisé la commande /sanctions {user}")
+
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -848,6 +961,10 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
                     value="tempmute"
                   ),
                 create_choice(
+                    name="sanctions",
+                    value="sanctions"
+                ),
+                create_choice(
                     name="unmute",
                     value="unmute"
                   ),
@@ -858,6 +975,10 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
                     name="banlist",
                     value="banlist"
                 ),
+                create_choice(
+                    name="warn",
+                    value="warn"
+                )
                 ]),
              ])
 async def help(ctx, command):
@@ -884,6 +1005,10 @@ async def help(ctx, command):
         , value="Cette commande permet de report un membre du discord pour plus de renseignement faites **/help report**", inline=False)
         embed.add_field(name="``/banlist``"
         , value="Cette commande permet d'obtenir la listes des membres bannis du discord, pour plus de renseignement faites **/help banlist**", inline=False)
+        embed.add_field(name="``/sanctions``"
+        , value="Cette commande permet d'obtenir la listes des sanctions d'un membre du discord, pour plus de renseignement faites **/help sanctions**", inline=False)
+        embed.add_field(name="``/warn``"
+        , value="Cette commande permet d'avertir un membre du discord, pour plus de renseignement faites **/help banlist**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     elif command == "clear":
@@ -958,13 +1083,36 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/banlist``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)      
-    
+    elif command == "sanctions":
+        author = ctx.author
+        embed= discord.Embed(title="Commande sanctions", description="***/sanctions***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir la liste des sanctions d'un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/sanctions [membre]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "warn":
+        author = ctx.author
+        embed= discord.Embed(title="Commande warn", description="***/warn***",
+        color=0x00ffaa)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande d'avertir un membre du discord", inline=False)
+        embed.add_field(name="Utilisation", value="``/warn [membre] [raison]``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+
 @bot.event
 async def on_slash_command_error(ctx, error):
-    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+    elif isinstance(error, discord.errors.HTTPException):
+        pass
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.errors.CommandNotFound):
         logging.error(error)
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+        logging.error(error)
     elif isinstance(error, discord.errors.HTTPException):
         pass
 

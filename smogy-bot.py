@@ -9,6 +9,7 @@ import aiofiles
 
 import discord
 from discord import colour
+from discord import embeds
 from discord.channel import TextChannel
 from discord.embeds import Embed
 
@@ -47,8 +48,7 @@ except FileNotFoundError:
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 
-@bot.event
-async def on_ready():
+async def sanctions_files():
     for guild in bot.guilds:
         bot.warnings[guild.id] = {}
         
@@ -75,8 +75,12 @@ async def on_ready():
 
                 except KeyError:
                     bot.warnings[guild.id][member_id] = [1, [(admin_id, reason)]]
-    await bot.change_presence(activity=discord.Streaming(name="twitch.tv/Smogy", url="https://www.twitch.tv/Smogy"))
-    logging.info(f"Bot pret !")
+
+@bot.event
+async def on_ready():
+    await sanctions_files()
+    await bot.change_presence(activity=discord.Streaming(name="/help", url="https://www.twitch.tv/Smogy"))
+    logging.info("Bot pret !")
 
 @bot.event
 async def on_member_join(member):
@@ -106,7 +110,6 @@ async def on_member_join(member):
              ])
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
-    logging.info(f"{ctx.author} a clear {nombre} messages dans le channel {ctx.channel}")
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0xfff04f
@@ -126,6 +129,7 @@ async def clear(ctx, nombre: int):
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed)
     await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** a été clear :white_check_mark:", color=0x34eb37), hidden=True)
+    logging.info(f"{ctx.author} a clear {nombre} messages dans le channel {ctx.channel}")
 
 @error.SlashCommandError
 async def clear_error(ctx, error):
@@ -151,7 +155,6 @@ async def clear_error(ctx, error):
              ])
 @has_permissions(ban_members=True)
 async def ban(ctx, user: discord.User, *, raison="Aucune raison donnée"):
-    logging.info(f"{ctx.author} a banni {user}, raison : {raison}")
     channel_logs = bot.get_channel(848578058906238996)
     author = ctx.author
     embed = discord.Embed(title=f"{user.name} a été **ban** !",
@@ -173,7 +176,7 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison donnée"):
     await user.send(embed=embed_user)
     await ctx.guild.ban(user, reason=raison)
     await ctx.send(embed=discord.Embed(description=f"Vous avez banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-
+    logging.info(f"{ctx.author} a banni {user}, raison : {raison}")
 
 @error.SlashCommandError
 async def ban_error(ctx, error):
@@ -199,9 +202,7 @@ async def ban_error(ctx, error):
 @has_permissions(manage_roles=True)
 @has_permissions(kick_members=True)
 async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
-    logging.info(f"{ctx.author} a kick {user}, raison : {reason}")
     channel_logs = bot.get_channel(848578058906238996)
-    author = ctx.author
     embed = discord.Embed(title=f"{user.name} a été **kick** !",
                           description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=0xa8324e)
     embed.set_thumbnail(url=image_acces)
@@ -222,6 +223,7 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
     await user.send(embed=embed_user)
     await ctx.guild.kick(user, reason=reason)
     await ctx.send(embed=discord.Embed(description=f"Vous avez kick **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+    channel_logs = bot.get_channel(848578058906238996)
     
 @error.SlashCommandError
 async def kick_error(ctx, error):
@@ -254,7 +256,6 @@ async def unban(ctx, user, *, raison="Aucune raison donnée"):
         color = 0x5eff8a
     elif rand_numb == 3:
         color = 0x3fc463
-    logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
     channel_logs = bot.get_channel(848578058906238996)
     banned_users = await ctx.guild.bans()
     user_name, user_discriminator = user.split('#')
@@ -269,6 +270,7 @@ async def unban(ctx, user, *, raison="Aucune raison donnée"):
             await ctx.guild.unban(user, reason=raison)
             await channel_logs.send(embed=unban_logs)
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+    logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
 
 @error.SlashCommandError
 async def unban_error(ctx, error):
@@ -353,7 +355,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
     channel_logs = bot.get_channel(848578058906238996)
     author = ctx.author
     if "s" == time:
-        logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
@@ -382,8 +383,8 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration)
         await ctx.guild.unban(user)
-    elif "m" == time:
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "m" == time:
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
         duration_min = duration * 60
@@ -413,8 +414,8 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_min)
         await ctx.guild.unban(user)
-    elif "h" == time:
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "h" == time:
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
         duration_heure = duration * 3600
@@ -444,8 +445,8 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_heure)
         await ctx.guild.unban(user)
-    elif "j" == time:
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "j" == time:
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
         duration_jour = duration * 86400
@@ -475,8 +476,8 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_jour)
         await ctx.guild.unban(user)
-    elif "mois" == duration:
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "mois" == duration:
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
         duration_mois = duration * 86400 * 30
@@ -506,6 +507,8 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         await ctx.guild.ban(user, reason=raison)
         await asyncio.sleep(duration_mois)
         await ctx.guild.unban(user)
+        logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
+
     else:
         author = ctx.author
         embed = discord.Embed(title="Valeur de l'argument **[temps]** est inconnue",
@@ -516,6 +519,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="j", value="jour(s)", inline=True)
         embed.add_field(name="mois", value="mois", inline=True)
         await ctx.send(embed=embed, hidden=True)
+
 
 @error.SlashCommandError
 async def tempban_error(ctx, error):
@@ -597,7 +601,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
     elif rand_numb == 3:
         color = 0xbb76f5
     if "s" == time:
-        logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
         await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -622,8 +625,8 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
-    elif "m" == time:
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "m" == time:
         await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_min = duration * 60
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
@@ -649,8 +652,8 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_min)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
-    elif "h" == time:
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "h" == time:
         await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_heure = duration * 3600
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
@@ -676,8 +679,8 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_heure)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
-    elif "j" == time:
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "j" == time:
         await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_jour = duration * 86400
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
@@ -703,8 +706,8 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_jour)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
-    elif "mois" == duration:
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
+    elif "mois" == duration:
         await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_mois = duration * 86400 * 30
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
@@ -730,6 +733,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         await user.add_roles(role_mute, reason=raison)
         await asyncio.sleep(duration_mois)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
+        logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
     else:
         author = ctx.author
         embed = discord.Embed(title="Valeur de l'argument **[temps]** est inconnue",
@@ -742,6 +746,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="mois", value="mois", inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
         await ctx.send(embed=embed, hidden=True)
+
 
 @error.SlashCommandError
 async def tempmute_error(ctx, error):
@@ -767,7 +772,6 @@ async def tempmute_error(ctx, error):
              ])
 @has_permissions(manage_roles=True)
 async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
-    logging.info(f"{ctx.author} a unmute {user}, raison : {raison}")
     channel_logs = bot.get_channel(848578058906238996)
     author = ctx.author
     role_mute = await getRoleMute(ctx)
@@ -790,6 +794,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
     await user.send(embed=embed_user)
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+    logging.info(f"{ctx.author} a unmute {user}, raison : {raison}")
 
 @error.SlashCommandError
 async def unmute_error(ctx, error):
@@ -801,7 +806,7 @@ async def unmute_error(ctx, error):
         await author.send(embed=embed)
 
 
-@slash.slash(name="report", description="Report un membre", options=[
+@slash.slash(name="report", description="Report un membre", permissions="",     options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être report",
@@ -819,7 +824,6 @@ async def unmute_error(ctx, error):
                     required=False),
              ])
 async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donnée"):
-    logging.info(f"{ctx.author} a report {user}, raison : {raison}, preuve : {preuve}")
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0x34ebe5
@@ -840,7 +844,7 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
     else:
             pass
     await channel_logs.send(embed=embed)
-
+    logging.info(f"{ctx.author} a report {user}, raison : {raison}, preuve : {preuve}")
     await ctx.send(embed=discord.Embed(description=f"Vous avez report **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
 
 
@@ -877,7 +881,7 @@ async def warn(ctx, user: discord.User, raison):
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, raison)]]
 
     async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
-        await file.write(f"{user.id} {ctx.author.id} {raison}\n")
+        await file.write(f"{user.id} {ctx.author.id} {raison} Warn\n")
     await ctx.send(embed=discord.Embed(description=f"Vous avez warn **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     embed_user = discord.Embed(title="Vous avez été warn !", color=color)
     embed_user.set_thumbnail(url=image_error)
@@ -909,6 +913,7 @@ async def sanctions(ctx, user: discord.User):
     elif rand_numb == 3:
         color = 0x42f575
     try:
+        await sanctions_files()
         i = 1
         embed = discord.Embed(title=f"Listes des sanctions de {user}", description=":warning:",colour=color)
         for author_id, raison in bot.warnings[ctx.guild.id][user.id][1]:
@@ -918,12 +923,21 @@ async def sanctions(ctx, user: discord.User):
             i += 1
         await ctx.send(embed=embed, hidden=True)
     except KeyError: # no warnings
-        embed = discord.Embed(title=f"Listes des sanctions de {user}", colour=color, description=f"{user.mention} n'a aucune sanction !")
+        embed = discord.Embed(title=f"Listes des sanctions de {user}", colour=color, description=f"Ce membre n'a aucune sanction !")
         embed.set_footer(text=user, icon_url=user.avatar_url)
         await ctx.send(embed=embed, hidden=True)
-
     logging.info(f"{ctx.author} a utilisé la commande /sanctions {user}")
-
+    
+"""@slash.slash()
+@has_permissions(manage_roles=True)
+async def del_sanctions(ctx, user: discord.User, sanction_number: int):
+    for guild in bot.guilds:
+        async with aiofiles.open(f"sanctions/{guild.id}.txt", mode="r") as file:
+            lines = await file.readlines()
+            for line in lines:
+                print(line)
+    ctx.send(':white_check_mark:', hidden=True)
+"""
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -982,7 +996,6 @@ async def sanctions(ctx, user: discord.User):
                 ]),
              ])
 async def help(ctx, command):
-    logging.info(f"{ctx.author} a utilisé la commande /help {command}")
     if command == "all_commands":
         author = ctx.author
         embed= discord.Embed(title="Liste de toutes les commandes les commandes",
@@ -1099,13 +1112,16 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/warn [membre] [raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
+    logging.info(f"{ctx.author} a utilisé la commande /help {command}")
 
 @bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Il semblerait qu'un argument de la commande soit **incorrecte ou manquant faites /help**")
+        await ctx.send(embed=discord.Embed(title="Error", description=error, color=0xeb4034), hidden=True)
     elif isinstance(error, discord.errors.HTTPException):
         pass
+    elif isinstance(error, MissingPermissions):
+        await ctx.send(embed=discord.Embed(title="Error", description=error, color=0xeb4034), hidden=True)
 
 @bot.event
 async def on_command_error(ctx, error):

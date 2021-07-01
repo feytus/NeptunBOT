@@ -79,7 +79,10 @@ async def sanctions_files():
 
 @bot.event
 async def on_ready():
-    await sanctions_files()
+    try:
+        await sanctions_files()
+    except:
+        pass
     await bot.change_presence(activity=discord.Streaming(name="/help", url="https://www.twitch.tv/Smogy"))
     logging.info("Bot pret !")
 
@@ -921,7 +924,7 @@ async def warn(ctx, user: discord.User, raison):
 
     async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 1 {raison}\n")
-
+    logging.info(f"{ctx.author} a warn {user}, raison : {raison}")
     await ctx.send(embed=discord.Embed(description=f"Vous avez warn **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     embed_user = discord.Embed(title="Vous avez été warn !", color=color)
     embed_user.set_thumbnail(url=image_error)
@@ -935,7 +938,7 @@ async def warn(ctx, user: discord.User, raison):
     embed_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_logs.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed_logs)
-    logging.info(f"{ctx.author} a warn {user}, raison : {raison}")
+    
 
 async def get_sanction_id(sanction_id):
     if sanction_id==1:
@@ -967,7 +970,10 @@ async def sanctions(ctx, user: discord.User):
     elif rand_numb == 3:
         color = 0x42f575
     try:
-        await sanctions_files()
+        try:
+            await sanctions_files()
+        except:
+            pass
         i = 1
         embed = discord.Embed(title=f"Listes des sanctions de {user}", description=":warning:",colour=color)
         for author_id, sanction_id, raison in bot.warnings[ctx.guild.id][user.id][1]:

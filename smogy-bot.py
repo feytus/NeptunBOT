@@ -40,8 +40,8 @@ date = full_date.strftime('%Y-%m-%d:%H:%M:%S')
 bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
 try:
-    logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
-    #logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
+    #logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
+    logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 except FileNotFoundError:
     os.mkdir('logs')

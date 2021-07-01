@@ -40,8 +40,8 @@ date = full_date.strftime('%Y-%m-%d:%H:%M:%S')
 bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
 try:
-    #logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
-    logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
+    logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
+    #logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 except FileNotFoundError:
     os.mkdir('logs')
@@ -76,6 +76,21 @@ async def sanctions_files():
 
                 except KeyError:
                     bot.warnings[guild.id][member_id] = [1, [(admin_id, sanction_id, reason)]]
+
+async def ignore_list():
+    for guild in bot.guilds:
+        bot.ignore_list[guild.id] = {}
+        try:
+            async with aiofiles.open(f"ignore_list/{guild.id}.txt", mode="a") as temp:
+                pass
+        except FileNotFoundError:
+            os.mkdir('ignore_list')
+        async with aiofiles.open(f"sanctions/{guild.id}.txt", mode="r") as file:
+            lines = await file.readlines()
+
+            for line in lines:
+                data = line.split(" ")
+                member_id = int(data[0]).strip("\n")
 
 @bot.event
 async def on_ready():
@@ -797,7 +812,6 @@ async def tempmute_error(ctx, error):
         embed.set_thumbnail(url=image_error)
         await author.send(embed=embed)
 
-
 @slash.slash(name="Unmute", description="Ne plus rendre muet un membre", options=[
                 create_option(
                     name="user",
@@ -909,6 +923,7 @@ async def on_guild_join(guild):
 @has_permissions(manage_roles=True)
 async def warn(ctx, user: discord.User, raison):
     await ctx.defer(hidden=True)
+    channel_logs = await bot.fetch_channel(848578058906238996)
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0xedda5f
@@ -932,14 +947,13 @@ async def warn(ctx, user: discord.User, raison):
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
     await user.send(embed=embed_user)
-    embed_logs = discord.Embed(title="{user} a été warn !", color=color)
+    embed_logs = discord.Embed(title=f"{user} a été warn !", color=color)
     embed_logs.set_thumbnail(url=image_acces)
     embed_logs.add_field(name="Raison", value=raison, inline=True)
     embed_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_logs.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed_logs)
     
-
 async def get_sanction_id(sanction_id):
     if sanction_id==1:
         return "warn"
@@ -988,17 +1002,7 @@ async def sanctions(ctx, user: discord.User):
         embed.set_footer(text=user, icon_url=user.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /sanctions {user}")
-    
-"""@slash.slash()
-@has_permissions(manage_roles=True)
-async def del_sanctions(ctx, user: discord.User, sanction_number: int):
-    for guild in bot.guilds:
-        async with aiofiles.open(f"sanctions/{guild.id}.txt", mode="r") as file:
-            lines = await file.readlines()
-            for line in lines:
-                print(line)
-    ctx.send(':white_check_mark:', hidden=True)
-"""
+
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -1177,6 +1181,21 @@ async def help(ctx, command):
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
 
 @bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    phrase = message.content.split(" ")
+
+    hey_list = ['Bonjour', 'bonjour', 'Bonsoir', 'bonsoir', 'Salut', 'salut',
+     'Hey', 'hey', 'Hello', 'hello', 'Coucou', 'coucou']
+    hey_respond_list = ['Bonjour', 'Bonsoir', 'Salut', 'Heyyy', 'Hello', 'Coucou']
+    if phrase[0] in hey_list:
+        await message.reply(random.choice(hey_respond_list))
+    await bot.process_commands(message)
+        
+
+@bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(embed=discord.Embed(title="Error", description=error, color=0xeb4034), hidden=True)
@@ -1188,9 +1207,9 @@ async def on_slash_command_error(ctx, error):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.errors.CommandNotFound):
-        logging.error(error)
+        pass
     elif isinstance(error, commands.MissingRequiredArgument):
-        logging.error(error)
+        pass
     elif isinstance(error, discord.errors.HTTPException):
         pass
 

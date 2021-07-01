@@ -40,8 +40,8 @@ date = full_date.strftime('%Y-%m-%d:%H:%M:%S')
 bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
 try:
-    #logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
-    logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
+    logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
+    #logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 except FileNotFoundError:
     os.mkdir('logs')
@@ -67,14 +67,15 @@ async def sanctions_files():
                 data = line.split(" ")
                 member_id = int(data[0])
                 admin_id = int(data[1])
-                reason = " ".join(data[2:]).strip("\n")
+                sanction_id = int(data[2])
+                reason = " ".join(data[3:]).strip("\n")
 
                 try:
                     bot.warnings[guild.id][member_id][0] += 1
-                    bot.warnings[guild.id][member_id][1].append((admin_id, reason))
+                    bot.warnings[guild.id][member_id][1].append((admin_id, sanction_id, reason))
 
                 except KeyError:
-                    bot.warnings[guild.id][member_id] = [1, [(admin_id, reason)]]
+                    bot.warnings[guild.id][member_id] = [1, [(admin_id, sanction_id, reason)]]
 
 @bot.event
 async def on_ready():
@@ -110,6 +111,7 @@ async def on_member_join(member):
              ])
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
+    await ctx.defer(hidden=True)
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0xfff04f
@@ -117,7 +119,6 @@ async def clear(ctx, nombre: int):
         color = 0x554fff
     elif rand_numb == 3:
         color = 0xff6eff
-    await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** est en train d'être clear ...", color=0x34eb37))
     channel_logs = bot.get_channel(848578058906238996)
     messages = await ctx.channel.history(limit=nombre + 1).flatten()
     for message in messages:
@@ -154,9 +155,17 @@ async def clear_error(ctx, error):
                     required=False),
              ])
 @has_permissions(ban_members=True)
-async def ban(ctx, user: discord.User, *, raison="Aucune raison donnée"):
+async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
+    await ctx.defer(hidden=True)
+    try:
+        bot.warnings[ctx.guild.id][user.id][0] += 1
+        bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 1,raison))
+    except KeyError:
+        bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 1,raison)]]
+
+    async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
+        await file.write(f"{user.id} {ctx.author.id} 1 {raison}\n")
     channel_logs = bot.get_channel(848578058906238996)
-    author = ctx.author
     embed = discord.Embed(title=f"{user.name} a été **ban** !",
                           description="Cet utilisateur n'a pas respecté les règles du serveur !", color=0xcc0202)
     embed.set_thumbnail(url=image_acces)
@@ -199,9 +208,17 @@ async def ban_error(ctx, error):
                     option_type=3,
                     required=False),
              ])
-@has_permissions(manage_roles=True)
 @has_permissions(kick_members=True)
-async def kick(ctx, user: discord.User, *, reason="Aucune raison donnée"):
+async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
+    await ctx.defer(hidden=True)
+    try:
+        bot.warnings[ctx.guild.id][user.id][0] += 1
+        bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 3,reason))
+    except KeyError:
+        bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 3,reason)]]
+
+    async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
+        await file.write(f"{user.id} {ctx.author.id} 3 {reason} Warn\n")
     channel_logs = bot.get_channel(848578058906238996)
     embed = discord.Embed(title=f"{user.name} a été **kick** !",
                           description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=0xa8324e)
@@ -248,7 +265,8 @@ async def kick_error(ctx, error):
                     required=False),
              ])
 @has_permissions(ban_members=True)
-async def unban(ctx, user, *, raison="Aucune raison donnée"):
+async def unban(ctx, user, *, raison="Aucune raison fournie"):
+    await ctx.defer(hidden=True)
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0x32a852
@@ -285,6 +303,7 @@ async def unban_error(ctx, error):
 @slash.slash(name="banlist", description="Permet d'obtenir la liste des membres bannis")
 @has_permissions(ban_members=True)
 async def banlist(ctx):
+    await ctx.defer(hidden=True)
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0xc43f3f
@@ -344,7 +363,16 @@ async def banlist(ctx):
                     required=False),
              ])
 @has_permissions(ban_members=True)
-async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison donnée"):
+async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
+    await ctx.defer(hidden=True)
+    try:
+        bot.warnings[ctx.guild.id][user.id][0] += 1
+        bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 4,raison))
+    except KeyError:
+        bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 4,raison)]]
+
+    async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
+        await file.write(f"{user.id} {ctx.author.id} 4 {raison}\n")
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0xd459d9
@@ -589,7 +617,16 @@ async def getRoleMute(ctx):
                     required=False),
              ])
 @has_permissions(manage_roles=True)
-async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison donnée"):
+async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
+    await ctx.defer(hidden=True)
+    try:
+        bot.warnings[ctx.guild.id][user.id][0] += 1
+        bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 2,raison))
+    except KeyError:
+        bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 2,raison)]]
+
+    async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
+        await file.write(f"{user.id} {ctx.author.id} 2 {raison}\n")
     channel_logs = bot.get_channel(848578058906238996)
     role_mute = await getRoleMute(ctx)
     author = ctx.author
@@ -771,9 +808,9 @@ async def tempmute_error(ctx, error):
                     required=False),
              ])
 @has_permissions(manage_roles=True)
-async def unmute(ctx, user: discord.User, *, raison="Aucune raison donnée"):
+async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
+    await ctx.defer(hidden=True)
     channel_logs = bot.get_channel(848578058906238996)
-    author = ctx.author
     role_mute = await getRoleMute(ctx)
 
     await user.remove_roles( role_mute, reason=raison)
@@ -823,7 +860,8 @@ async def unmute_error(ctx, error):
                     option_type=3,
                     required=False),
              ])
-async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donnée"):
+async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve fournie"):
+    await ctx.defer(hidden=True)
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0x34ebe5
@@ -836,7 +874,7 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve donn�
     embed.add_field(name="Raison", value=raison, inline=True)
     embed.add_field(name="Preuve", value=preuve, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-    if preuve != "Aucune preuve donnée":
+    if preuve != "Aucune preuve fournie":
         if preuve.endswith(".png") or preuve.endswith(".jpg") or preuve.endswith(".gif"):
             embed.set_thumbnail(url=preuve)
         else:
@@ -867,6 +905,7 @@ async def on_guild_join(guild):
             ])
 @has_permissions(manage_roles=True)
 async def warn(ctx, user: discord.User, raison):
+    await ctx.defer(hidden=True)
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0xedda5f
@@ -876,25 +915,39 @@ async def warn(ctx, user: discord.User, raison):
         color = 0xbb76f5
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
-        bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, raison))
+        bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 1,raison))
     except KeyError:
-        bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, raison)]]
+        bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 1,raison)]]
 
     async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
-        await file.write(f"{user.id} {ctx.author.id} {raison} Warn\n")
+        await file.write(f"{user.id} {ctx.author.id} 1 {raison}\n")
+
     await ctx.send(embed=discord.Embed(description=f"Vous avez warn **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     embed_user = discord.Embed(title="Vous avez été warn !", color=color)
     embed_user.set_thumbnail(url=image_error)
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-    embed_user = discord.Embed(title="{user} a été warn !", color=color)
-    embed_user.set_thumbnail(url=image_error)
-    embed_user.add_field(name="Raison", value=raison, inline=True)
-    embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-    embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
+    await user.send(embed=embed_user)
+    embed_logs = discord.Embed(title="{user} a été warn !", color=color)
+    embed_logs.set_thumbnail(url=image_acces)
+    embed_logs.add_field(name="Raison", value=raison, inline=True)
+    embed_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
+    embed_logs.set_footer(text=f"Date • {datetime.datetime.now()}")
+    await channel_logs.send(embed=embed_logs)
     logging.info(f"{ctx.author} a warn {user}, raison : {raison}")
 
+async def get_sanction_id(sanction_id):
+    if sanction_id==1:
+        return "warn"
+    elif sanction_id==2:
+        return "tempmute"
+    elif sanction_id==3:
+        return "kick"
+    elif sanction_id==4:
+        return "tempban"
+    elif sanction_id==5:
+        return "ban"
 
 @slash.slash(name="sanctions", description="Permet d'obtenir la liste des sanctions d'un membre", options=[
                 create_option(
@@ -905,6 +958,7 @@ async def warn(ctx, user: discord.User, raison):
             ])
 @has_permissions(manage_roles=True)
 async def sanctions(ctx, user: discord.User):
+    await ctx.defer(hidden=True)
     rand_numb = random.randint(1, 3)
     if rand_numb == 1:
         color = 0x34ebe5
@@ -916,9 +970,10 @@ async def sanctions(ctx, user: discord.User):
         await sanctions_files()
         i = 1
         embed = discord.Embed(title=f"Listes des sanctions de {user}", description=":warning:",colour=color)
-        for author_id, raison in bot.warnings[ctx.guild.id][user.id][1]:
+        for author_id, sanction_id, raison in bot.warnings[ctx.guild.id][user.id][1]:
+            sanction_name = await get_sanction_id(sanction_id)
             author = ctx.guild.get_member(author_id)
-            embed.add_field(name=f"{i}. Avertissement par **{author}**", value=f"Raison : ``{raison}``", inline=False)
+            embed.add_field(name=f"{i}. Sanction : **{sanction_name}**", value=f"Raison : **{raison}**, Modérateur : **{author}**", inline=False)
             embed.set_footer(text=user, icon_url=user.avatar_url)
             i += 1
         await ctx.send(embed=embed, hidden=True)
@@ -996,6 +1051,7 @@ async def del_sanctions(ctx, user: discord.User, sanction_number: int):
                 ]),
              ])
 async def help(ctx, command):
+    await ctx.defer(hidden=True)
     if command == "all_commands":
         author = ctx.author
         embed= discord.Embed(title="Liste de toutes les commandes les commandes",

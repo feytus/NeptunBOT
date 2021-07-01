@@ -1,0 +1,5 @@
+warn: 1
+tempmute: 2
+kick: 3
+tempban: 4
+ban: 5

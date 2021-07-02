@@ -1,6 +1,7 @@
 config
 upload-server.sh
 .DS_Store
+test.py
 
 /logs/*.log
 /sanctions/

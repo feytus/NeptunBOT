@@ -77,21 +77,6 @@ async def sanctions_files():
                 except KeyError:
                     bot.warnings[guild.id][member_id] = [1, [(admin_id, sanction_id, reason)]]
 
-async def ignore_list():
-    for guild in bot.guilds:
-        bot.ignore_list[guild.id] = {}
-        try:
-            async with aiofiles.open(f"ignore_list/{guild.id}.txt", mode="a") as temp:
-                pass
-        except FileNotFoundError:
-            os.mkdir('ignore_list')
-        async with aiofiles.open(f"sanctions/{guild.id}.txt", mode="r") as file:
-            lines = await file.readlines()
-
-            for line in lines:
-                data = line.split(" ")
-                member_id = int(data[0]).strip("\n")
-
 @bot.event
 async def on_ready():
     try:
@@ -1002,7 +987,7 @@ async def sanctions(ctx, user: discord.User):
         embed.set_footer(text=user, icon_url=user.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /sanctions {user}")
-
+ 
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -1191,7 +1176,7 @@ async def on_message(message):
      'Hey', 'hey', 'Hello', 'hello', 'Coucou', 'coucou']
     hey_respond_list = ['Bonjour', 'Bonsoir', 'Salut', 'Heyyy', 'Hello', 'Coucou']
     if phrase[0] in hey_list:
-        await message.reply(random.choice(hey_respond_list))
+        await message.reply(random.choice(hey_respond_list), delete_after=5)
     await bot.process_commands(message)
         
 

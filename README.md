@@ -31,7 +31,7 @@ This command allows you to delete a certain number of messages.
 
 This command allows you to temporarily mute a member of the discord.
 
-- `/tempmute {member} {amount: int} {time: (s - m - h - j - mois)} {*reason}`
+- `/tempmute {member} {amount: int} {time: (s / m / h / j / mois)} {*reason}`
 
 ### **Unmute**
 
@@ -49,7 +49,7 @@ This command allows you to kick a member of the discord.
 
 This command allows you to temporarily ban a member of the discord.
 
-- `/tempban {member} {amount: int} {time: (s - m - h - j - mois)} {*reason}`
+- `/tempban {member} {amount: int} {time: (s / m / h / j / mois)} {*reason}`
 
 ### **Ban**
 

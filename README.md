@@ -45,6 +45,12 @@ This command allows you to kick a member of the discord.
 
 - `/kick {member} {*reason}`
 
+### **Tempban**
+
+This command allows you to temporarily ban a member of the discord.
+
+- `/tempban {member} {amount: int} {time: (s - m - h - j - mois)} {*reason}`
+
 ### **Ban**
 
 This command allows you to ban a member of the discord.
@@ -57,4 +63,32 @@ This command allows to un-ban a member of the discord.
 
 - `/unban {member} {*reason}`
 
-⚠️ The option {member} should be like this : **name#1234**
+⚠️ The option **{member}** should be like this : *name#1234*
+
+### **Banlist**
+
+This command allows you to get the list of members banned from the discord.
+
+- `/banlist`
+
+### **Warn**
+
+This command allows you to warn a member of the discord.
+
+- `/warn {member} {reason}`
+
+### **Sanctions**
+
+This command allows you to see all the sanctions of a discord member.
+
+- `/sanctions {member}`
+
+## **Other things**
+
+The bot also send a message on member join the discord.
+
+![Image of welcome_message_embed](https://i.imgur.com/GlyVXYZ.png)
+
+All bot actions are logged in a file and in a channel exemple :
+
+![Image of welcome_message_embed](https://i.imgur.com/isEzFh3.png)

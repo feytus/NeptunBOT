@@ -10,6 +10,7 @@ import aiofiles
 import discord
 from discord import colour
 from discord import embeds
+from discord import permissions
 from discord.channel import TextChannel
 from discord.embeds import Embed
 
@@ -40,8 +41,8 @@ date = full_date.strftime('%Y-%m-%d:%H:%M:%S')
 bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
 try:
-    logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
-    #logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
+    #logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
+    logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 except FileNotFoundError:
     os.mkdir('logs')
@@ -77,6 +78,15 @@ async def sanctions_files():
                 except KeyError:
                     bot.warnings[guild.id][member_id] = [1, [(admin_id, sanction_id, reason)]]
 
+def get_color(color1, color2, color3):
+    rand_numb = random.randint(1, 3)
+    if rand_numb == 1:
+        return color1
+    elif rand_numb == 2:
+        return color2
+    elif rand_numb == 3:
+        return color3
+
 @bot.event
 async def on_ready():
     try:
@@ -90,13 +100,7 @@ async def on_ready():
 async def on_member_join(member):
     logging.info(f"{member} as join the discord")
     channel = bot.get_channel(848561158206259211)
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0x00ff4c
-    elif rand_numb == 2:
-        color = 0x00f7ff
-    elif rand_numb == 3:
-        color = 0xeb3495
+    color = get_color(0x00ff4c, 0x00f7ff, 0xeb3495)
     channel:TextChannel = await bot.fetch_channel(848561158206259211)
     embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le discord de **Smogy** !", color=color)
     embed.set_author(name="Smogy BOT", url="https://www.twitch.tv/Smogy", icon_url="https://i.imgur.com/ChQwvkA.png")
@@ -105,7 +109,7 @@ async def on_member_join(member):
     await channel.send(embed=embed)
 
 
-@slash.slash(name="Clear", description="Effacer des messages", options=[
+@slash.slash(name="clear", description="Effacer des messages", options=[
                 create_option(
                     name="nombre",
                     description="Indiquer le nombre de message à clear",
@@ -115,13 +119,7 @@ async def on_member_join(member):
 @has_permissions(manage_messages=True)
 async def clear(ctx, nombre: int):
     await ctx.defer(hidden=True)
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0xfff04f
-    elif rand_numb == 2:
-        color = 0x554fff
-    elif rand_numb == 3:
-        color = 0xff6eff
+    color = get_color(0xfff04f, 0x554fff, 0xff6eff)
     channel_logs = bot.get_channel(848578058906238996)
     messages = await ctx.channel.history(limit=nombre + 1).flatten()
     for message in messages:
@@ -135,17 +133,8 @@ async def clear(ctx, nombre: int):
     await ctx.send(embed=discord.Embed(description=f"Le channel **{ctx.channel}** a été clear :white_check_mark:", color=0x34eb37), hidden=True)
     logging.info(f"{ctx.author} a clear {nombre} messages dans le channel {ctx.channel}")
 
-@error.SlashCommandError
-async def clear_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        author = ctx.author
-        embed = discord.Embed(title="Permissions insufisantes",
-                              description=f"{author.mention} Vous devez avoir la permission : **manage_messages**", color=0xf09400)
-        embed.set_thumbnail(url=image_error)
-        await author.send(embed=embed)
 
-
-@slash.slash(name="Ban", description="Bannir un membre définitivement", options=[
+@slash.slash(name="ban", description="Bannir un membre définitivement", options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être ban",
@@ -190,16 +179,8 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     logging.info(f"{ctx.author} a banni {user}, raison : {raison}")
 
-@error.SlashCommandError
-async def ban_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        author = ctx.author
-        embed = discord.Embed(title="Permissions insufisantes",
-                              description=f"{author.mention} Vous devez avoir la permission : **ban_members**", color=0xf09400)
-        embed.set_thumbnail(url=image_error)
-        await author.send(embed=embed)
 
-@slash.slash(name="Kick", description="Exclure un membre", options=[
+@slash.slash(name="kick", description="Exclure un membre", options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être kick",
@@ -245,17 +226,8 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez kick **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     channel_logs = bot.get_channel(848578058906238996)
     
-@error.SlashCommandError
-async def kick_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        author = ctx.author
-        embed = discord.Embed(title="Permissions insufisantes",
-                              description=f"{author.mention} Vous devez avoir la permission : **kick_members**", color=0xf09400)
-        embed.set_thumbnail(url=image_error)
-        await author.send(embed=embed)
 
-
-@slash.slash(name="Unban", description="De-bannir un membre", options=[
+@slash.slash(name="unban", description="De-bannir un membre", options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être unban, sous cette forme exemple ``user#1234``",
@@ -270,13 +242,7 @@ async def kick_error(ctx, error):
 @has_permissions(ban_members=True)
 async def unban(ctx, user, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0x32a852
-    elif rand_numb == 2:
-        color = 0x5eff8a
-    elif rand_numb == 3:
-        color = 0x3fc463
+    color = get_color(0x32a852, 0x5eff8a, 0x3fc463)
     channel_logs = bot.get_channel(848578058906238996)
     banned_users = await ctx.guild.bans()
     user_name, user_discriminator = user.split('#')
@@ -293,27 +259,12 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
 
-@error.SlashCommandError
-async def unban_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        author = ctx.author
-        embed = discord.Embed(title="Permissions insufisantes",
-                              description=f"{author.mention} Vous devez avoir la permission : **ban_members**",
-                              color=0xf09400)
-        embed.set_thumbnail(url=image_error)
-        await author.send(embed=embed)
 
 @slash.slash(name="banlist", description="Permet d'obtenir la liste des membres bannis")
 @has_permissions(ban_members=True)
 async def banlist(ctx):
     await ctx.defer(hidden=True)
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0xc43f3f
-    elif rand_numb == 2:    
-        color = 0xc45e3f
-    elif rand_numb == 3:
-        color = 0xc43f72
+    color = get_color(0xc43f3f, 0xc45e3f, 0xc43f72)
     banned_users_list = await ctx.guild.bans()
     embed = discord.Embed(title="Voici la liste des membres bannis du discord", color=color)
     for banned_users in banned_users_list:
@@ -322,7 +273,7 @@ async def banlist(ctx):
           inline=False)
     await ctx.send(embed=embed, hidden=True)
 
-@slash.slash(name="Tempban", description="Bannir temporairement un membre", options=[
+@slash.slash(name="tempban", description="Bannir temporairement un membre", options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être ban",
@@ -376,13 +327,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
 
     async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 4 {raison}\n")
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0xd459d9
-    elif rand_numb == 2:
-        color = 0x5973d9    
-    elif rand_numb == 3:
-        color = 0xd95959
+    color = get_color(0xd459d9, 0x5973d9, 0xd95959)
     channel_logs = bot.get_channel(848578058906238996)
     author = ctx.author
     if "s" == time:
@@ -552,16 +497,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         await ctx.send(embed=embed, hidden=True)
 
 
-@error.SlashCommandError
-async def tempban_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        author = ctx.author
-        embed = discord.Embed(title="Permissions insufisantes",
-                              description=f"{author.mention} Vous devez avoir la permission : **ban_members**", color=0xf09400)
-        embed.set_thumbnail(url=image_error)
-        await author.send(embed=embed)
-
-
 async def createRoleMute(ctx):
     role_mute = await ctx.guild.create_role(name = "mute",
                                             permissions= discord.Permissions(send_messages= False, speak= False))
@@ -576,7 +511,7 @@ async def getRoleMute(ctx):
 
     return await createRoleMute(ctx)
 
-@slash.slash(name="Tempmute", description="Rendre muet temporairement un membre", options=[
+@slash.slash(name="tempmute", description="Rendre muet temporairement un membre", options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être mute",
@@ -633,13 +568,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
     channel_logs = bot.get_channel(848578058906238996)
     role_mute = await getRoleMute(ctx)
     author = ctx.author
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0xedda5f
-    elif rand_numb == 2:
-        color = 0xedab5f
-    elif rand_numb == 3:
-        color = 0xbb76f5
+    color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     if "s" == time:
         await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
@@ -788,16 +717,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         await ctx.send(embed=embed, hidden=True)
 
 
-@error.SlashCommandError
-async def tempmute_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        author = ctx.author
-        embed = discord.Embed(title="Permissions insufisantes",
-                              description=f"{author.mention} Vous devez avoir la permission : **manage_roles**", color=0xf09400)
-        embed.set_thumbnail(url=image_error)
-        await author.send(embed=embed)
-
-@slash.slash(name="Unmute", description="Ne plus rendre muet un membre", options=[
+@slash.slash(name="unmute", description="Ne plus rendre muet un membre", options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être unmute",
@@ -835,15 +755,6 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     logging.info(f"{ctx.author} a unmute {user}, raison : {raison}")
 
-@error.SlashCommandError
-async def unmute_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        author = ctx.author
-        embed = discord.Embed(title="Permissions insufisantes",
-                              description=f"{author.mention} Vous devez avoir la permission : **manage_roles**", color=0xf09400)
-        embed.set_thumbnail(url=image_error)
-        await author.send(embed=embed)
-
 
 @slash.slash(name="report", description="Report un membre", permissions="",     options=[
                 create_option(
@@ -864,13 +775,7 @@ async def unmute_error(ctx, error):
              ])
 async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve fournie"):
     await ctx.defer(hidden=True)
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0x34ebe5
-    elif rand_numb == 2:
-        color = 0x2f5da
-    elif rand_numb == 3:
-        color = 0x42f575
+    color = get_color(0x34ebe5, 0x2f5da, 0x42f575)
     channel_logs = await bot.fetch_channel(848578058906238996)
     embed = discord.Embed(title=f"{ctx.author} a report {user}", color=color)
     embed.add_field(name="Raison", value=raison, inline=True)
@@ -909,13 +814,7 @@ async def on_guild_join(guild):
 async def warn(ctx, user: discord.User, raison):
     await ctx.defer(hidden=True)
     channel_logs = await bot.fetch_channel(848578058906238996)
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0xedda5f
-    elif rand_numb == 2:
-        color = 0xedab5f
-    elif rand_numb == 3:
-        color = 0xbb76f5
+    color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 1,raison))
@@ -939,6 +838,7 @@ async def warn(ctx, user: discord.User, raison):
     embed_logs.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed_logs)
     
+
 async def get_sanction_id(sanction_id):
     if sanction_id==1:
         return "warn"
@@ -951,6 +851,7 @@ async def get_sanction_id(sanction_id):
     elif sanction_id==5:
         return "ban"
 
+
 @slash.slash(name="sanctions", description="Permet d'obtenir la liste des sanctions d'un membre", options=[
                 create_option(
                     name="user",
@@ -961,27 +862,26 @@ async def get_sanction_id(sanction_id):
 @has_permissions(manage_roles=True)
 async def sanctions(ctx, user: discord.User):
     await ctx.defer(hidden=True)
-    rand_numb = random.randint(1, 3)
-    if rand_numb == 1:
-        color = 0x34ebe5
-    elif rand_numb == 2:
-        color = 0x2f5da
-    elif rand_numb == 3:
-        color = 0x42f575
+    color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
     try:
         try:
             await sanctions_files()
         except:
             pass
         i = 1
-        embed = discord.Embed(title=f"Listes des sanctions de {user}", description=":warning:",colour=color)
+        embed_title = discord.Embed(description=f":warning: Listes des sanctions de **{user}**", colour=color)
+        embed_title.set_footer(text=user, icon_url=user.avatar_url)
+        await ctx.send(embed=embed_title, hidden=True)
         for author_id, sanction_id, raison in bot.warnings[ctx.guild.id][user.id][1]:
+            color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
             sanction_name = await get_sanction_id(sanction_id)
             author = ctx.guild.get_member(author_id)
-            embed.add_field(name=f"{i}. Sanction : **{sanction_name}**", value=f"Raison : **{raison}**, Modérateur : **{author}**", inline=False)
-            embed.set_footer(text=user, icon_url=user.avatar_url)
+            embed=discord.Embed(title=f"{i}. {sanction_name}", color=color)
+            embed.add_field(name="Raison", value=raison)
+            embed.add_field(name="Modérateur", value=author.mention)
+            await ctx.send(embed=embed, hidden=True)
             i += 1
-        await ctx.send(embed=embed, hidden=True)
+        
     except KeyError: # no warnings
         embed = discord.Embed(title=f"Listes des sanctions de {user}", colour=color, description=f"Ce membre n'a aucune sanction !")
         embed.set_footer(text=user, icon_url=user.avatar_url)
@@ -1047,10 +947,11 @@ async def sanctions(ctx, user: discord.User):
              ])
 async def help(ctx, command):
     await ctx.defer(hidden=True)
+    color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     if command == "all_commands":
         author = ctx.author
         embed= discord.Embed(title="Liste de toutes les commandes les commandes",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="``/clear``"
         , value="Cette commande permet d'effacer un certains nombre de message, pour plus de renseignement faites **/help clear**", inline=False)
         embed.add_field(name="``/kick``"
@@ -1078,7 +979,7 @@ async def help(ctx, command):
     elif command == "clear":
         author = ctx.author
         embed= discord.Embed(title="Commande clear", description="***/clear***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'effacer un certains nombre de message", inline=False)
         embed.add_field(name="Utilisation", value="``/clear [nombre de message]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1086,7 +987,7 @@ async def help(ctx, command):
     elif command == "kick":
         author = ctx.author
         embed= discord.Embed(title="Commande kick", description="***/kick***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'expulser un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/kick [membre] [*raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1094,7 +995,7 @@ async def help(ctx, command):
     elif command == "ban":
         author = ctx.author
         embed= discord.Embed(title="Commande ban", description="***/ban***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de bannir un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/ban [membre] [*raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1102,7 +1003,7 @@ async def help(ctx, command):
     elif command == "unban":
         author = ctx.author
         embed= discord.Embed(title="Commande unban", description="***/unban***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de dé-bannir un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/unban [membre] [*raison]`` :warning: l'option **membre** doit être rempli sous cette forme ***user#1234***", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1110,7 +1011,7 @@ async def help(ctx, command):
     elif command == "tempban":
         author = ctx.author
         embed= discord.Embed(title="Commande tempban", description="***/tempban***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de bannir temporairement un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/tempban [membre] [durée : nombre] [temps : seconde / minute / heure / jour / mois] [*raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1118,7 +1019,7 @@ async def help(ctx, command):
     elif command == "tempmute":
         author = ctx.author
         embed= discord.Embed(title="Commande tempmute", description="***/tempmute***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de mute temporairement un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/tempmute [membre] [durée : nombre] [temps : seconde / minute / heure / jour / mois] [*raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1126,7 +1027,7 @@ async def help(ctx, command):
     elif command == "unmute":
         author = ctx.author
         embed= discord.Embed(title="Commande tempban", description="***/tempmute***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet dé-mute un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/unmute [membre] [*raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1134,7 +1035,7 @@ async def help(ctx, command):
     elif command == "report":
         author = ctx.author
         embed= discord.Embed(title="Commande report", description="***/report***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de report un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/report [membre] [raison] [*preuve: :warning: url vers une image :warning:]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1142,7 +1043,7 @@ async def help(ctx, command):
     elif command == "banlist":
         author = ctx.author
         embed= discord.Embed(title="Commande banlist", description="***/banlist***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir la liste des membres bannis du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/banlist``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1150,7 +1051,7 @@ async def help(ctx, command):
     elif command == "sanctions":
         author = ctx.author
         embed= discord.Embed(title="Commande sanctions", description="***/sanctions***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir la liste des sanctions d'un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/sanctions [membre]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
@@ -1158,12 +1059,13 @@ async def help(ctx, command):
     elif command == "warn":
         author = ctx.author
         embed= discord.Embed(title="Commande warn", description="***/warn***",
-        color=0x00ffaa)
+        color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande d'avertir un membre du discord", inline=False)
         embed.add_field(name="Utilisation", value="``/warn [membre] [raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
+
 
 @bot.event
 async def on_message(message):

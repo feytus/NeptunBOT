@@ -8,6 +8,7 @@ import datetime
 import random
 import traceback
 import aiofiles
+from sys import exc_info
 
 import discord
 from discord import colour
@@ -232,7 +233,7 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     channel_logs = bot.get_channel(848578058906238996)
     
 
-@slash.slash(name="unban", description="De-bannir un membre", options=[
+@slash.slash(name="unban", description="dé-bannir un membre", options=[
                 create_option(
                     name="user",
                     description="Entrez l'user qui doit être unban, sous cette forme exemple ``user#1234``",
@@ -250,8 +251,14 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     color = get_color(0x32a852, 0x5eff8a, 0x3fc463)
     channel_logs = bot.get_channel(848578058906238996)
+    user_base = user
     banned_users = await ctx.guild.bans()
-    user_name, user_discriminator = user.split('#')
+    try:
+        user_name, user_discriminator = user.split('#')
+    except ValueError:
+        exc_type, value, traceback = exc_info()
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: L'option {user} doit être sous la forme suivante : ``user#1234``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé la commande '/unban {user}', ValueError: {value}")
     unban_logs = discord.Embed(title=f"**{user}** a été dé-banni", color=color)
     unban_logs.set_thumbnail(url=image_acces)
     unban_logs.add_field(name="Raison", value=raison, inline=True)
@@ -262,8 +269,12 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
         if (user.name, user.discriminator) == (user_name, user_discriminator):
             await ctx.guild.unban(user, reason=raison)
             await channel_logs.send(embed=unban_logs)
-            await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+            await ctx.send(embed=discord.Embed(description=f"Vous avez dé-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
             logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
+        else:
+            await ctx.send(embed=discord.Embed(description=f":warning: Aucun membre banni ne correspond à : **{user_base}** :negative_squared_cross_mark: Faites **/banlist** pour voir la liste des membres bannis."
+            , color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
+            logging.warning(f"{ctx.author} a utilisé la commande '/unban {user_base}', Aucun membre correspondant à : {user_base}")
 
 
 @slash.slash(name="banlist", description="Permet d'obtenir la liste des membres bannis")
@@ -740,28 +751,33 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
 @has_permissions(send_messages=True, read_messages=True, manage_roles=True)
 async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
-    channel_logs = bot.get_channel(848578058906238996)
-    role_mute = await getRoleMute(ctx)
-
-    await user.remove_roles( role_mute, reason=raison)
-    embed = discord.Embed(title=f"{user} été de-mute !",
+    embed = discord.Embed(title=f"{user} été dé-mute !",
                               description="Il peut maintenant re-parler dans le chat !",
                               color=0x42f557)
     embed.set_thumbnail(url=image_acces)
     embed.add_field(name="Raison", value=raison, inline=True)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-    embed_user = discord.Embed(title="Vous avez été de-mute !",
+    embed_user = discord.Embed(title="Vous avez été dé-mute !",
                                description="Vous pouvez maintenant re-parler dans le chat !",
                                color=0x42f557)
     embed_user.set_thumbnail(url=image_acces)
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-    await user.send(embed=embed_user)
-    await ctx.send(embed=discord.Embed(description=f"Vous avez de-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-    await channel_logs.send(embed=embed)
-    logging.info(f"{ctx.author} a unmute {user}, raison : {raison}")
+    channel_logs = bot.get_channel(848578058906238996)
+    role_mute = await getRoleMute(ctx)
+    if role_mute in user.roles:
+        await user.remove_roles(role_mute, reason=raison)
+        await user.send(embed=embed_user)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez dé-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        logging.info(f"{ctx.author} a unmute {user}, raison : {raison}")
+    else:
+        await ctx.send(embed=discord.Embed(description=f":warning: **{user}** n'est pas mute :negative_squared_cross_mark:"
+            , color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
+        logging.warning(f"{ctx.author} a utilisé la commande '/unmute {user}', ce membre n'est pas mute")
+    
 
 
 @slash.slash(name="report", description="Report un membre", permissions="",     options=[
@@ -873,29 +889,28 @@ async def get_sanction_id(sanction_id):
 async def sanctions(ctx, user: discord.User):
     await ctx.defer(hidden=True)
     color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
+    embed_title = discord.Embed(title="Sanctions", description=f"Listes des sanctions de **{user}**", colour=color)
     try:
         try:
             await sanctions_files()
         except:
             pass
         i = 1
-        embed_title = discord.Embed(title="Sanctions", description=f":warning: Listes des sanctions de **{user}**", colour=color)
         embed_title.set_footer(text=user, icon_url=user.avatar_url)
-        await ctx.send(embed=embed_title, hidden=True)
         for author_id, sanction_id, raison in bot.warnings[ctx.guild.id][user.id][1]:
             color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
             sanction_name = await get_sanction_id(sanction_id)
             author = ctx.guild.get_member(author_id)
-            embed=discord.Embed(title=f"{i}. {sanction_name}", color=color)
+            embed=discord.Embed(title=f"{i}. :warning: {sanction_name}", color=color)
             embed.add_field(name="Raison", value=raison)
             embed.add_field(name="Modérateur", value=author.mention)
             await ctx.send(embed=embed, hidden=True)
             i += 1
-        
+
     except KeyError: # no warnings
-        embed = discord.Embed(title=f"Listes des sanctions de {user}", colour=color, description=f"Ce membre n'a aucune sanction !")
-        embed.set_footer(text=user, icon_url=user.avatar_url)
-        await ctx.send(embed=embed, hidden=True)
+        embed_title.add_field(name=":white_check_mark:", value="Ce membre n'a aucune sanciton !")
+        embed_title.set_footer(text=user, icon_url=user.avatar_url)
+        await ctx.send(embed=embed_title, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /sanctions {user}")
  
 
@@ -1090,30 +1105,43 @@ async def on_message(message):
      'Hey', 'hey', 'Hello', 'hello', 'Coucou', 'coucou']
     hey_respond_list = ['Bonjour', 'Bonsoir', 'Salut', 'Heyyy', 'Hello', 'Coucou']
     if phrase[0] in hey_list:
-        await message.reply(random.choice(hey_respond_list), delete_after=5)
+        try:
+            user = phrase[1]
+            if user.startswith("<@!"):
+                pass
+            else:
+                await message.reply(random.choice(hey_respond_list), delete_after=5)
+        except IndexError:
+            await message.reply(random.choice(hey_respond_list), delete_after=5)
+
     await bot.process_commands(message)
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    from sys import exc_info
     exc_type, value, traceback = exc_info()
     if exc_type is discord.errors.Forbidden:
         logging.warning(f"{event}, discord.errors.Forbidden")
-        
+    elif exc_type is ValueError:
+        if event == "unban":
+            print('is unban')
+        logging.warning(f"{event}, ValueError")
+    else:
+        logging.warning(f"{event}, {exc_type}")
+
 @bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(embed=discord.Embed(title="Erreur", description=error, color=0xeb4034), hidden=True)
+        await ctx.send(embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
         logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
     elif isinstance(error, discord.errors.HTTPException):
         pass
     elif isinstance(error, MissingPermissions):
-        embed=discord.Embed(title="Erreur", description=f"{error}", color=0xeb4034)
+        embed=discord.Embed(title="Erreur", description=f"{error}", color=get_color(0xf54531, 0xf57231, 0xf53145))
         embed.add_field(name="Permissions requises", value=f"**{error.missing_perms[0]}**")
         await ctx.send(embed=embed, hidden=True)
         logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
     elif isinstance(error, commands.BotMissingPermissions):
-        embed=discord.Embed(title="Erreur", description=f"{error}", color=0xeb4034)
+        embed=discord.Embed(title="Erreur", description=f"{error}", color=get_color(0xf54531, 0xf57231, 0xf53145))
         embed.add_field(name="Permission(s) requise(s)", value=f"**{error.missing_perms[0]}**")
         await ctx.send(embed=embed, hidden=True)
         logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")

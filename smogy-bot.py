@@ -1,23 +1,25 @@
+import sys
 from time import *
 import logging
-from logging import INFO, error, DEBUG
+from logging import INFO, error, DEBUG, exception
 import asyncio
 import os
 import datetime
 import random
+import traceback
 import aiofiles
 
 import discord
 from discord import colour
 from discord import embeds
 from discord import permissions
+from discord import errors
 from discord.channel import TextChannel
 from discord.embeds import Embed
 
 from discord.ext import commands
-from discord.ext.commands import MissingPermissions, has_permissions, has_role
-from discord.flags import Intents
-from discord_slash import SlashCommand, SlashContext, error
+from discord.ext.commands import MissingPermissions, has_permissions, has_role, bot_has_permissions
+from discord_slash import SlashCommand
 from dotenv import load_dotenv
 from discord_slash.utils.manage_commands import create_option, create_choice
 
@@ -97,9 +99,10 @@ async def on_ready():
     logging.info("Bot pret !")
 
 @bot.event
+@has_permissions(send_messages=True, read_messages=True, view_channel=True)
 async def on_member_join(member):
     logging.info(f"{member} as join the discord")
-    channel = bot.get_channel(848561158206259211)
+    #channel: TextChannel = bot.get_channel(848561158206259211)
     color = get_color(0x00ff4c, 0x00f7ff, 0xeb3495)
     channel:TextChannel = await bot.fetch_channel(848561158206259211)
     embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le discord de **Smogy** !", color=color)
@@ -107,7 +110,6 @@ async def on_member_join(member):
     embed.set_thumbnail(url="https://i.imgur.com/ChQwvkA.png")
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel.send(embed=embed)
-
 
 @slash.slash(name="clear", description="Effacer des messages", options=[
                 create_option(
@@ -117,6 +119,7 @@ async def on_member_join(member):
                     required=True),
              ])
 @has_permissions(manage_messages=True)
+@has_permissions(send_messages=True, read_messages=True, manage_messages=True)
 async def clear(ctx, nombre: int):
     await ctx.defer(hidden=True)
     color = get_color(0xfff04f, 0x554fff, 0xff6eff)
@@ -147,6 +150,7 @@ async def clear(ctx, nombre: int):
                     required=False),
              ])
 @has_permissions(ban_members=True)
+@has_permissions(send_messages=True, read_messages=True, ban_members=True)
 async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     try:
@@ -165,7 +169,6 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     embed.add_field(name="Raison", value=raison, inline=True)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-    await channel_logs.send(embed=embed)
     embed_user = discord.Embed(title="Vous avez été banni !",
                                description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                            "Si la raison de votre bannissement vous semble incorrecte, "
@@ -174,8 +177,9 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-    await user.send(embed=embed_user)
     await ctx.guild.ban(user, reason=raison)
+    await channel_logs.send(embed=embed)
+    await user.send(embed=embed_user)
     await ctx.send(embed=discord.Embed(description=f"Vous avez banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     logging.info(f"{ctx.author} a banni {user}, raison : {raison}")
 
@@ -193,6 +197,7 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
                     required=False),
              ])
 @has_permissions(kick_members=True)
+@has_permissions(send_messages=True, read_messages=True, kick_members=True)
 async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     try:
@@ -211,7 +216,6 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     embed.add_field(name="Raison", value=reason, inline=True)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.set_footer()
-    await channel_logs.send(embed=embed)
     embed_user = discord.Embed(title="Vous avez été kick !",
                                description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                            "Si la raison de votre kick vous semble incorrecte, "
@@ -221,8 +225,9 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     embed_user.add_field(name="Raison", value=reason, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
-    await user.send(embed=embed_user)
     await ctx.guild.kick(user, reason=reason)
+    await channel_logs.send(embed=embed)
+    await user.send(embed=embed_user)
     await ctx.send(embed=discord.Embed(description=f"Vous avez kick **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     channel_logs = bot.get_channel(848578058906238996)
     
@@ -240,6 +245,7 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
                     required=False),
              ])
 @has_permissions(ban_members=True)
+@has_permissions(send_messages=True, read_messages=True, manage_guild=True)
 async def unban(ctx, user, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     color = get_color(0x32a852, 0x5eff8a, 0x3fc463)
@@ -256,8 +262,8 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
         if (user.name, user.discriminator) == (user_name, user_discriminator):
             await ctx.guild.unban(user, reason=raison)
             await channel_logs.send(embed=unban_logs)
-    await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-    logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
+            await ctx.send(embed=discord.Embed(description=f"Vous avez de-banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+            logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
 
 
 @slash.slash(name="banlist", description="Permet d'obtenir la liste des membres bannis")
@@ -272,6 +278,7 @@ async def banlist(ctx):
          value=f"Raison du ban : **{banned_users.reason}**, ID : **{banned_users.user.id}**",
           inline=False)
     await ctx.send(embed=embed, hidden=True)
+    logging.info(f"{ctx.author} a utilisé la commande /banlist")
 
 @slash.slash(name="tempban", description="Bannir temporairement un membre", options=[
                 create_option(
@@ -331,8 +338,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
     channel_logs = bot.get_channel(848578058906238996)
     author = ctx.author
     if "s" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
         embed.add_field(name="Utilisateur banni", value=user.mention, inline=True)
@@ -341,7 +346,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
         embed.set_thumbnail(url=image_acces)
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été banni temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre ban vous semble incorrecte, "
@@ -355,14 +359,14 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         embed_user.set_thumbnail(url=image_error)
-        await user.send(embed=embed_user)
         await ctx.guild.ban(user, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await user.send(embed=embed_user)
+        await channel_logs.send(embed=embed)
         await asyncio.sleep(duration)
         await ctx.guild.unban(user)
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
     elif "m" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-
         duration_min = duration * 60
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -372,7 +376,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="Durée", value=f"{duration} minute(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été banni temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre ban vous semble incorrecte, "
@@ -386,14 +389,14 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await ctx.guild.ban(user, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_min)
         await ctx.guild.unban(user)
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
     elif "h" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-
         duration_heure = duration * 3600
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -403,7 +406,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="Durée", value=f"{duration} heure(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été banni temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre ban vous semble incorrecte, "
@@ -417,14 +419,14 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await ctx.guild.ban(user, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_heure)
         await ctx.guild.unban(user)
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
     elif "j" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-
         duration_jour = duration * 86400
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -434,7 +436,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="Durée", value=f"{duration} jour(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été banni temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre ban vous semble incorrecte, "
@@ -448,14 +449,14 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await ctx.guild.ban(user, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_jour)
         await ctx.guild.unban(user)
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
     elif "mois" == duration:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-
         duration_mois = duration * 86400 * 30
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -465,7 +466,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="Durée", value=f"{duration} mois", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été banni temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre ban vous semble incorrecte, "
@@ -479,8 +479,10 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.add_field(name="Discord", value="https://discord.gg/fqEpWkQdcf", inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await ctx.guild.ban(user, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_mois)
         await ctx.guild.unban(user)
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
@@ -503,6 +505,7 @@ async def createRoleMute(ctx):
     for channel in ctx.guild.channels:
         await channel.set_permissions(role_mute, send_messages=False, speak= False)
 
+
 async def getRoleMute(ctx):
     roles = ctx.guild.roles
     for role in roles:
@@ -510,6 +513,7 @@ async def getRoleMute(ctx):
             return role
 
     return await createRoleMute(ctx)
+
 
 @slash.slash(name="tempmute", description="Rendre muet temporairement un membre", options=[
                 create_option(
@@ -570,7 +574,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
     author = ctx.author
     color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     if "s" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
         embed.add_field(name="Utilisateur mute", value=user.mention, inline=True)
@@ -579,7 +582,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
         embed.set_thumbnail(url=image_acces)
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été mute temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre mute vous semble incorrecte, "
@@ -590,13 +592,14 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         embed_user.set_thumbnail(url=image_error)
-        await user.send(embed=embed_user)
         await user.add_roles(role_mute, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
     elif "m" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_min = duration * 60
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -606,7 +609,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="Durée", value=f"{duration} minute(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été mute temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre mute vous semble incorrecte, "
@@ -617,13 +619,14 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Temps de mute", value=f"{duration} minute(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await user.add_roles(role_mute, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_min)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
     elif "h" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_heure = duration * 3600
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -633,7 +636,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="Durée", value=f"{duration} heure(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été mute temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre mute vous semble incorrecte, "
@@ -644,13 +646,14 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Temps de banissement", value=f"{duration} heure(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await user.add_roles(role_mute, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_heure)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
     elif "j" == time:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_jour = duration * 86400
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -660,7 +663,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="Durée", value=f"{duration} jour(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été mute temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre mute vous semble incorrecte, "
@@ -671,13 +673,14 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Temps de mute", value=f"{duration} jour(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await user.add_roles(role_mute, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_jour)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
     elif "mois" == duration:
-        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         duration_mois = duration * 86400 * 30
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
@@ -687,7 +690,6 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="Durée", value=f"{duration} mois", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await channel_logs.send(embed=embed)
         embed_user = discord.Embed(title="Vous avez été mute temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre mute vous semble incorrecte, "
@@ -698,8 +700,10 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Temps de mute", value=f"{duration} mois", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
         await user.add_roles(role_mute, reason=raison)
+        await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+        await channel_logs.send(embed=embed)
+        await user.send(embed=embed_user)
         await asyncio.sleep(duration_mois)
         await user.remove_roles(role_mute, reason="Fin de la période de mute")
         logging.info(f"{ctx.author} a mute temporairement {user} : {duration} {time}, raison : {raison}")
@@ -743,7 +747,6 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     embed.add_field(name="Raison", value=raison, inline=True)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-    await channel_logs.send(embed=embed)
     embed_user = discord.Embed(title="Vous avez été de-mute !",
                                description="Vous pouvez maintenant re-parler dans le chat !",
                                color=0x42f557)
@@ -753,6 +756,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
     await user.send(embed=embed_user)
     await ctx.send(embed=discord.Embed(description=f"Vous avez de-mute **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
+    await channel_logs.send(embed=embed)
     logging.info(f"{ctx.author} a unmute {user}, raison : {raison}")
 
 
@@ -811,6 +815,7 @@ async def on_guild_join(guild):
                     required=True)
             ])
 @has_permissions(manage_roles=True)
+@has_permissions(send_messages=True, read_messages=True)
 async def warn(ctx, user: discord.User, raison):
     await ctx.defer(hidden=True)
     channel_logs = await bot.fetch_channel(848578058906238996)
@@ -860,6 +865,7 @@ async def get_sanction_id(sanction_id):
                     required=True)
             ])
 @has_permissions(manage_roles=True)
+@has_permissions(send_messages=True, read_messages=True)
 async def sanctions(ctx, user: discord.User):
     await ctx.defer(hidden=True)
     color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
@@ -869,7 +875,7 @@ async def sanctions(ctx, user: discord.User):
         except:
             pass
         i = 1
-        embed_title = discord.Embed(description=f":warning: Listes des sanctions de **{user}**", colour=color)
+        embed_title = discord.Embed(title="Sanctions", description=f":warning: Listes des sanctions de **{user}**", colour=color)
         embed_title.set_footer(text=user, icon_url=user.avatar_url)
         await ctx.send(embed=embed_title, hidden=True)
         for author_id, sanction_id, raison in bot.warnings[ctx.guild.id][user.id][1]:
@@ -1080,24 +1086,30 @@ async def on_message(message):
     if phrase[0] in hey_list:
         await message.reply(random.choice(hey_respond_list), delete_after=5)
     await bot.process_commands(message)
-        
 
+@bot.event
+async def on_error(event, *args, **kwargs):
+    from sys import exc_info
+    exc_type, value, traceback = exc_info()
+    if exc_type is discord.errors.Forbidden:
+        logging.warning(f"{event}, discord.errors.Forbidden")
+        
 @bot.event
 async def on_slash_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(embed=discord.Embed(title="Error", description=error, color=0xeb4034), hidden=True)
+        await ctx.send(embed=discord.Embed(title="Erreur", description=error, color=0xeb4034), hidden=True)
+        logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
     elif isinstance(error, discord.errors.HTTPException):
         pass
     elif isinstance(error, MissingPermissions):
-        await ctx.send(embed=discord.Embed(title="Error", description=error, color=0xeb4034), hidden=True)
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CommandNotFound):
-        pass
-    elif isinstance(error, commands.MissingRequiredArgument):
-        pass
-    elif isinstance(error, discord.errors.HTTPException):
-        pass
+        embed=discord.Embed(title="Erreur", description=f"{error}", color=0xeb4034)
+        embed.add_field(name="Permissions requises", value=f"**{error.missing_perms[0]}**")
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
+    elif isinstance(error, commands.BotMissingPermissions):
+        embed=discord.Embed(title="Erreur", description=f"{error}", color=0xeb4034)
+        embed.add_field(name="Permission(s) requise(s)", value=f"**{error.missing_perms[0]}**")
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
 
 bot.run(os.getenv("TOKEN"))

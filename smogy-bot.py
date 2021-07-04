@@ -11,16 +11,10 @@ import aiofiles
 from sys import exc_info
 
 import discord
-from discord import colour
-from discord import embeds
-from discord import permissions
-from discord import errors
-from discord import guild
 from discord.channel import TextChannel
-from discord.embeds import Embed
 
 from discord.ext import commands
-from discord.ext.commands import MissingPermissions, has_permissions, has_role, bot_has_permissions
+from discord.ext.commands import MissingPermissions, has_permissions
 from discord_slash import SlashCommand
 from dotenv import load_dotenv
 from discord_slash.utils.manage_commands import create_option, create_choice

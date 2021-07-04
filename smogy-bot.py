@@ -268,6 +268,7 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
 
 @slash.slash(name="banlist", description="Permet d'obtenir la liste des membres bannis")
 @has_permissions(ban_members=True)
+@has_permissions(send_messages=True, read_messages=True, manage_guild=True)
 async def banlist(ctx):
     await ctx.defer(hidden=True)
     color = get_color(0xc43f3f, 0xc45e3f, 0xc43f72)
@@ -324,6 +325,7 @@ async def banlist(ctx):
                     required=False),
              ])
 @has_permissions(ban_members=True)
+@has_permissions(send_messages=True, read_messages=True, ban_members=True)
 async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     try:
@@ -559,6 +561,7 @@ async def getRoleMute(ctx):
                     required=False),
              ])
 @has_permissions(manage_roles=True)
+@has_permissions(send_messages=True, read_messages=True, manage_roles=True)
 async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     try:
@@ -734,6 +737,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
                     required=False),
              ])
 @has_permissions(manage_roles=True)
+@has_permissions(send_messages=True, read_messages=True, manage_roles=True)
 async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     channel_logs = bot.get_channel(848578058906238996)
@@ -951,6 +955,7 @@ async def sanctions(ctx, user: discord.User):
                 )
                 ]),
              ])
+@has_permissions(send_messages=True, read_messages=True)
 async def help(ctx, command):
     await ctx.defer(hidden=True)
     color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
@@ -1074,6 +1079,7 @@ async def help(ctx, command):
 
 
 @bot.event
+@has_permissions(send_messages=True, read_messages=True)
 async def on_message(message):
     if message.author == bot.user:
         return

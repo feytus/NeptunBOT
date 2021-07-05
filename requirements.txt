@@ -1,9 +1,8 @@
 discord
+discord_buttons
 dnspython==1.16.0
 python-dotenv==0.15.0
-asyncio==3.4.3
 pynacl
 youtube_dl
 discord-py-slash-command
 aiofiles
-discord_buttons

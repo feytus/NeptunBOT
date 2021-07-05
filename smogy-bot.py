@@ -34,14 +34,13 @@ image_error="https://i.ibb.co/tHWL83V/acces-denied.png"
 image_acces="https://i.ibb.co/"
 
 full_date = datetime.datetime.now()
-date = full_date.strftime('%Y-%m-%d:%H:%M:%S')
+date = full_date.strftime('%Y-%m-%d-%H-%M-%S')
 
 bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
 channel_welcome:TextChannel = bot.get_channel(os.getenv("channel_welcome"))
 
 try:
-    #logging.basicConfig(filename=f"logs/smogy.log", level=logging.INFO,
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 except FileNotFoundError:

@@ -5,5 +5,5 @@ asyncio==3.4.3
 pynacl
 youtube_dl
 discord-py-slash-command
-logging
 aiofiles
+discord_buttons

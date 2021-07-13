@@ -1007,11 +1007,11 @@ async def serverinfo(ctx):
     logging.info(f"{ctx.author} a utilisé la commande /serverinfo")
 
 
-@bot.command(name="config_server", description="Permet de configurer le bot pour le serveur discord")
+@slash.slash(name="config_server", description="Permet de configurer le bot pour le serveur discord")
 @has_permissions(administrator=True)
 @bot_has_permissions(administrator=True)
 async def config_server(ctx):
-    #await ctx.defer()
+    await ctx.defer()
     guild: discord.Guild = ctx.message.guild
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),

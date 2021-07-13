@@ -1,8 +1,9 @@
 discord
-discord_buttons
+discord-components
+discord-py-slash-command
 dnspython==1.16.0
 python-dotenv==0.15.0
 pynacl
 youtube_dl
-discord-py-slash-command
 aiofiles
+pyfade

@@ -2,6 +2,10 @@
 
 Smogy BOT is a **usefull** moderation bot totally made in **python** with the module ``discord_py`` and ``discord_slash``.
 
+## **Setup**
+
+To setup the bot you need to execute ``setup.py`` file and enter the token of your bot. Then a server administrator will have to execute the command ``/config_server``.
+
 ## **Normal member commands list**
 
 \
@@ -18,6 +22,12 @@ This command allows you to obtain more information about an order.
 This command allows you to report a member who has not respected the rules of the server.
 
 - `/report {member} {reason} {*proof}`
+
+### **Server info**
+
+This command allows you to get information about the discord.
+
+- `/serverinfo`
 
 ## **Moderator commands list**
 
@@ -82,6 +92,12 @@ This command allows you to warn a member of the discord.
 This command allows you to see all the sanctions of a discord member.
 
 - `/sanctions {member}`
+
+### **Server config**
+
+This command allows you to configure the bot for the discord server.
+
+- `/server_config`
 
 ## **Other things**
 

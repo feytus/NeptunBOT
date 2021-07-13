@@ -1,19 +1,41 @@
 import os
 
+os.system('pip3 install -r requirements.txt')
+os.system('clear')
+
+from pyfade import *
+
+setup = """
+███████╗███████╗████████╗██╗   ██╗██████╗ 
+██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
+███████╗█████╗     ██║   ██║   ██║██████╔╝
+╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝ 
+███████║███████╗   ██║   ╚██████╔╝██║     
+╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝     
+                                          
+"""
+
+print(Fade.Vertical(Colors.green_to_blue, setup))
+
 try:
-    config = open("config", "x")
+    config = open("token", "x")
 except FileExistsError:
-    os.remove("config")
-    config = open("config", "a")
+    os.remove("token")
+    config = open("token", "a")
 
 token = input("Entrez le token du bot : ")
 config.write(f"TOKEN = {token}\n")
 
-channel_logs = input("Entrez l'id du channel logs : ")
-config.write(f"channel_logs = {channel_logs}\n")
+os.system('clear')
+setup_finish = """
+███████╗███████╗████████╗██╗   ██╗██████╗     ███████╗██╗███╗   ██╗██╗███████╗██╗  ██╗
+██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗    ██╔════╝██║████╗  ██║██║██╔════╝██║  ██║
+███████╗█████╗     ██║   ██║   ██║██████╔╝    █████╗  ██║██╔██╗ ██║██║███████╗███████║
+╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝     ██╔══╝  ██║██║╚██╗██║██║╚════██║██╔══██║
+███████║███████╗   ██║   ╚██████╔╝██║         ██║     ██║██║ ╚████║██║███████║██║  ██║
+╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝         ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝╚══════╝╚═╝  ╚═╝
+"""
 
-channel_welcome = input("Entrez l'id du channel de bienvenue : ")
-config.write(f"channel_welcome = {channel_welcome}\n")
+print(Fade.Vertical(Colors.red_to_blue, setup_finish))
 
-invite_link = input("Entrez un lien d'invitation ATTENTION veillez bien à ce que l'invation n'expire jamais : ")
-config.write(f"invite_link = {invite_link}\n")
+input("Appuyez sur une ENTER pour quitter le setup ")

@@ -28,7 +28,7 @@ from discord_slash import SlashCommand
 from discord_slash.model import ButtonStyle
 from dotenv import load_dotenv
 from discord_slash.utils.manage_commands import create_option, create_choice
-from discord_components import DiscordComponents, Button, Interaction
+from discord_components import DiscordComponents, Button, Interaction, component
 
 default_intents = discord.Intents.default()
 default_intents.members=True
@@ -38,7 +38,6 @@ bot.remove_command("help")
 slash = SlashCommand(bot, sync_commands=True)
 
 image_error="https://i.ibb.co/tHWL83V/acces-denied.png"
-image_acces="https://i.ibb.co/"
 
 full_date = datetime.datetime.now()
 date = full_date.strftime('%Y-%m-%d-%H-%M-%S')
@@ -48,8 +47,6 @@ ddb = DiscordComponents(bot)
 bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
 load_dotenv(dotenv_path="token")
-
-
 
 error = """
  █████╗ ████████╗████████╗███████╗███╗   ██╗████████╗██╗ ██████╗ ███╗   ██╗
@@ -91,6 +88,39 @@ except FileNotFoundError:
     print(Fade.Vertical(Colors.red_to_blue, error))
     print("Vous devez absolument configurer le bot avez la commande /config_server !")
 
+async def check_is_config():
+    channel_logs_is_config = None
+    channel_welcome_is_config = None
+    invite_link_is_config = None
+    with open('config.json') as infile:
+        data = json.load(infile)
+    try:
+        data['channel_welcome']
+        logging.info('✓ Channel_welcome is config')
+        print('✓ Channel_welcome is config')
+    except:
+        print("✘ Channel_welcome n'a pas été configuré")
+        logging.warning('✓ Channel_welcome is not config')
+        channel_welcome_is_config = False
+    try:
+        data['invite_link']
+        logging.info('✓ Invite_link is config')
+        print('✓ Invite_link is config')
+    except:
+        print("✘ Invite_link n'a pas été configuré")
+        logging.warning('✓ Invite_link is not config')
+        invite_link_is_config = False
+    try:
+        data['channel_logs']
+        logging.info('✓ Channel_logs is config')
+        print('✓ Channel_logs is config')
+    except:
+        print("✘ Channel_logs n'a pas été configuré")
+        logging.warning('✓ Channel_logs is not config')
+        channel_logs_is_config = False
+    
+    if channel_welcome_is_config is False or invite_link_is_config is False or channel_logs_is_config is False:
+        return False
 
 async def sanctions_files():
     for guild in bot.guilds:
@@ -132,6 +162,8 @@ def get_color(color1, color2, color3):
 
 @bot.event
 async def on_ready():
+    if await check_is_config() is False:
+        print(Fade.Vertical(Colors.red_to_blue, error), "\nVous devez configurer le bot pour le discord en utilisant la commande /config_server")
     try:
         await sanctions_files()
     except:
@@ -141,15 +173,23 @@ async def on_ready():
 
 @bot.event
 @bot_has_permissions(send_messages=True, read_messages=True, view_channel=True)
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
+    guild: discord.Guild = await bot.fetch_guild(member.guild.id)
     logging.info(f"{member} as join the discord")
     color = get_color(0x00ff4c, 0x00f7ff, 0xeb3495)
     with open('config.json') as infile:
         data = json.load(infile)
-    channel:TextChannel = await bot.fetch_channel(data['channel_welcome'])
+    try:
+        channel:TextChannel = await bot.fetch_channel(data['channel_welcome'])
+    except:
+        owner = await bot.fetch_user(guild.owner_id)
+        await owner.send(embed=discord.Embed(
+            title="Erreur", 
+            description=f":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server`` sur votre discord **{guild.name}**", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)))
     embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le discord de **Smogy** !", color=color)
     embed.set_author(name="Smogy BOT", url="https://www.twitch.tv/Smogy", icon_url="https://i.imgur.com/ChQwvkA.png")
-    embed.set_thumbnail(url="https://i.imgur.com/ChQwvkA.png")
+    embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel.send(embed=embed)
 
@@ -164,6 +204,9 @@ async def on_member_join(member):
 @bot_has_permissions(send_messages=True, read_messages=True, manage_messages=True)
 async def clear(ctx, nombre: int):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0xfff04f, 0x554fff, 0xff6eff)
     with open('config.json') as infile:
         data = json.load(infile)
@@ -172,7 +215,7 @@ async def clear(ctx, nombre: int):
     for message in messages:
         await message.delete()
     embed = discord.Embed(title=f"Le channel {ctx.channel} a été clear !", color=color)
-    embed.set_thumbnail(url=image_acces)
+    embed.set_thumbnail(url=ctx.author.avatar_url)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.add_field(name="Nombre de messages supprimés", value=nombre, inline=False)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -197,6 +240,9 @@ async def clear(ctx, nombre: int):
 @bot_has_permissions(send_messages=True, read_messages=True, ban_members=True)
 async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 1,raison))
@@ -209,7 +255,7 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     embed = discord.Embed(title=f"{user.name} a été **ban** !",
                           description="Cet utilisateur n'a pas respecté les règles du serveur !", color=0xcc0202)
-    embed.set_thumbnail(url=image_acces)
+    embed.set_thumbnail(url=user.avatar_url)
     embed.add_field(name="Utilisateur banni", value=user.mention, inline=True)
     embed.add_field(name="Raison", value=raison, inline=True)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -218,7 +264,7 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
                                description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                            "Si la raison de votre bannissement vous semble incorrecte, "
                                            "vous pouvez contacter le modérateur qui vous a banni !", color=0xcc0202)
-    embed_user.set_thumbnail(url= image_acces)
+    embed_user.set_thumbnail(url=ctx.author.avatar_url)
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -245,30 +291,34 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
 @bot_has_permissions(send_messages=True, read_messages=True, kick_members=True)
 async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 3,reason))
     except KeyError:
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 3,reason)]]
-
+    
     async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 3 {reason} Warn\n")
     with open('config.json') as infile:
         data = json.load(infile)
+    
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     embed = discord.Embed(title=f"{user.name} a été **kick** !",
                           description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=0xa8324e)
-    embed.set_thumbnail(url=image_acces)
+    embed.set_thumbnail(url=user.avatar_url)
     embed.add_field(name="Utilisateur kick", value=user.mention, inline=True)
     embed.add_field(name="Raison", value=reason, inline=True)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-    embed.set_footer()
+    embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     embed_user = discord.Embed(title="Vous avez été kick !",
                                description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                            "Si la raison de votre kick vous semble incorrecte, "
                                            "vous pouvez contacter le modérateur qui vous a kick"
                                            "vous pouvez revenir sur le serveur via le lien ci-dessous.", color=0xa8324e)
-    embed_user.set_thumbnail(url=image_error)
+    embed_user.set_thumbnail(url=ctx.author.avatar_url)
     embed_user.add_field(name="Raison", value=reason, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
@@ -297,6 +347,9 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
 @bot_has_permissions(send_messages=True, read_messages=True, manage_guild=True)
 async def unban(ctx, user, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x32a852, 0x5eff8a, 0x3fc463)
     with open('config.json') as infile:
         data = json.load(infile)
@@ -310,7 +363,7 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: L'option {user} doit être sous la forme suivante : ``user#1234``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé la commande '/unban {user}', ValueError: {value}")
     unban_logs = discord.Embed(title=f"**{user}** a été dé-banni", color=color)
-    unban_logs.set_thumbnail(url=image_acces)
+    unban_logs.set_thumbnail(url=ctx.author.avatar_url)
     unban_logs.add_field(name="Raison", value=raison, inline=True)
     unban_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     unban_logs.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -334,6 +387,9 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
 @bot_has_permissions(send_messages=True, read_messages=True, manage_guild=True)
 async def banlist(ctx):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0xc43f3f, 0xc45e3f, 0xc43f72)
     guild = ctx.guild
     banned_users_list = await guild.bans()
@@ -392,6 +448,9 @@ async def banlist(ctx):
 @bot_has_permissions(send_messages=True, read_messages=True, ban_members=True)
 async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 4,raison))
@@ -412,7 +471,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="Durée", value=f"{duration} seconde(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed_user = discord.Embed(title="Vous avez été banni temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre ban vous semble incorrecte, "
@@ -427,7 +486,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed_user.set_thumbnail(url=image_error)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
         await user.send(embed=embed_user)
         await ctx.guild.ban(user, reason=raison)
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
@@ -439,7 +498,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         duration_min = duration * 60
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur banni", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} minute(s)", inline=True)
@@ -452,7 +511,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
                                                "**Vous pourrez revenir sur le serveur via le lien ci-dessous une fois que votre ban "
                                                "sera terminé.**",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} minute(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -471,7 +530,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         duration_heure = duration * 3600
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur banni", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} heure(s)", inline=True)
@@ -484,7 +543,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
                                                "**Vous pourrez revenir sur le serveur via le lien ci-dessous une fois que votre ban "
                                                "sera terminé.**",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} heure(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -503,7 +562,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         duration_jour = duration * 86400
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur banni", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} jour(s)", inline=True)
@@ -516,7 +575,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
                                                "**Vous pourrez revenir sur le serveur via le lien ci-dessous une fois que votre ban "
                                                "sera terminé.**",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} jour(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -535,7 +594,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         duration_mois = duration * 86400 * 30
         embed = discord.Embed(title=f"{user.name} a été **ban temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur banni", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} mois", inline=True)
@@ -548,7 +607,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
                                                "**Vous pourrez revenir sur le serveur via le lien ci-dessous une fois que votre ban "
                                                "sera terminé.**",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} mois", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -639,6 +698,9 @@ async def getRoleMute(ctx):
 @bot_has_permissions(send_messages=True, read_messages=True, manage_roles=True)
 async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 2,raison))
@@ -661,7 +723,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed.add_field(name="Durée", value=f"{duration} seconde(s)", inline=True)
         embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed_user = discord.Embed(title="Vous avez été mute temporairement !",
                                    description="Il semblerait que vous n'ayez pas respecté les règles du serveur. "
                                                "Si la raison de votre mute vous semble incorrecte, "
@@ -671,7 +733,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         embed_user.add_field(name="Temps de mute", value=f"{duration} seconde(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed_user.set_thumbnail(url=image_error)
+        embed_user.set_thumbnail(url=ctx.author.avatar_url)
         await user.add_roles(role_mute, reason=raison)
         await ctx.send(embed=discord.Embed(description=f"Vous avez mute temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         await channel_logs.send(embed=embed)
@@ -683,7 +745,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         duration_min = duration * 60
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur mute", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} minute(s)", inline=True)
@@ -694,7 +756,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
                                                "Si la raison de votre mute vous semble incorrecte, "
                                                "vous vous contacter le modérateur qui vous a mute.",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed_user.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de mute", value=f"{duration} minute(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -710,7 +772,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         duration_heure = duration * 3600
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur mute", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} heure(s)", inline=True)
@@ -721,7 +783,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
                                                "Si la raison de votre mute vous semble incorrecte, "
                                                "vous vous contacter le modérateur qui vous a mute.",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed_user.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} heure(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -737,7 +799,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         duration_jour = duration * 86400
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur mute", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} jour(s)", inline=True)
@@ -748,7 +810,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
                                                "Si la raison de votre mute vous semble incorrecte, "
                                                "vous vous contacter le modérateur qui vous a mute.",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed_user.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de mute", value=f"{duration} jour(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -764,7 +826,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
         duration_mois = duration * 86400 * 30
         embed = discord.Embed(title=f"{user.name} a été **mute temporairement** !",
                               description=f"Cet utilisateur n'a pas respecté les règles du serveur !", color=color)
-        embed.set_thumbnail(url=image_acces)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Utilisateur mute", value=user.mention, inline=True)
         embed.add_field(name="Raison", value=raison, inline=True)
         embed.add_field(name="Durée", value=f"{duration} mois", inline=True)
@@ -775,7 +837,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
                                                "Si la raison de votre mute vous semble incorrecte, "
                                                "vous vous contacter le modérateur qui vous a mute.",
                                    color=color)
-        embed_user.set_thumbnail(url=image_error)
+        embed_user.set_thumbnail(url=ctx.author.avatar_url)
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de mute", value=f"{duration} mois", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
@@ -817,17 +879,20 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
 @bot_has_permissions(send_messages=True, read_messages=True, manage_roles=True)
 async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     embed = discord.Embed(title=f"{user} été dé-mute !",
                               description="Il peut maintenant re-parler dans le chat !",
                               color=0x42f557)
-    embed.set_thumbnail(url=image_acces)
+    embed.set_thumbnail(url=user.avatar_url)
     embed.add_field(name="Raison", value=raison, inline=True)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     embed_user = discord.Embed(title="Vous avez été dé-mute !",
                                description="Vous pouvez maintenant re-parler dans le chat !",
                                color=0x42f557)
-    embed_user.set_thumbnail(url=image_acces)
+    embed_user.set_thumbnail(url=ctx.author.avatar_url)
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -867,6 +932,9 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
              ])
 async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve fournie"):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x34ebe5, 0x2f5da, 0x42f575)
     with open('config.json') as infile:
         data = json.load(infile)
@@ -908,6 +976,12 @@ async def on_guild_join(guild):
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def warn(ctx, user: discord.User, raison):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     with open('config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
@@ -923,13 +997,13 @@ async def warn(ctx, user: discord.User, raison):
     logging.info(f"{ctx.author} a warn {user}, raison : {raison}")
     await ctx.send(embed=discord.Embed(description=f"Vous avez warn **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     embed_user = discord.Embed(title="Vous avez été warn !", color=color)
-    embed_user.set_thumbnail(url=image_error)
+    embed_user.set_thumbnail(url=ctx.author.avatar_url)
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
     await user.send(embed=embed_user)
     embed_logs = discord.Embed(title=f"{user} a été warn !", color=color)
-    embed_logs.set_thumbnail(url=image_acces)
+    embed_logs.set_thumbnail(url=user.avatar_url)
     embed_logs.add_field(name="Raison", value=raison, inline=True)
     embed_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_logs.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -960,6 +1034,9 @@ async def get_sanction_id(sanction_id):
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def sanctions(ctx, user: discord.User):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
     embed_title = discord.Embed(title="Sanctions", description=f"Listes des sanctions de **{user}**", colour=color)
     try:
@@ -990,6 +1067,9 @@ async def sanctions(ctx, user: discord.User):
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def serverinfo(ctx):
     await ctx.defer(hidden=True)
+    if await check_is_config() is False:
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     guild: discord.Guild = ctx.guild
     if guild.description == None:
         guild_description="Aucune description"
@@ -1007,11 +1087,12 @@ async def serverinfo(ctx):
     logging.info(f"{ctx.author} a utilisé la commande /serverinfo")
 
 
-@slash.slash(name="config_server", description="Permet de configurer le bot pour le serveur discord")
+@bot.command(name="config_server", description="Permet de configurer le bot pour le serveur discord")
 @has_permissions(administrator=True)
 @bot_has_permissions(administrator=True)
 async def config_server(ctx):
-    await ctx.defer(hidden=True)
+    #message = await ctx.defer(hidden=True)
+    message = await ctx.send("Je réfléchis ...")
     guild: discord.Guild = ctx.guild
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -1019,7 +1100,6 @@ async def config_server(ctx):
     }
     channel = await guild.create_text_channel('configuration-serveur', overwrites=overwrites)
     config_channel = channel.id
-    
     data= {'channel_config': config_channel}
     with open('config.json', 'w') as outfile:
         json.dump(data, outfile, indent=4)
@@ -1031,12 +1111,12 @@ async def config_server(ctx):
             Button(style=ButtonStyle.green, label="Oui", custom_id="yes_welcome_channel"), 
             Button(style=ButtonStyle.red, label="Non", custom_id="no_welcome_channel")
             ]])
-    await ctx.send(embed=discord.Embed(title="Configuration du bot", 
-    description="Un salon a été créé pour la Configuration du bot", 
-    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
-        components=[
-            Button(style=ButtonStyle.URL, label="Lien vers le channel", url=f"https://discord.com/channels/{guild.id}/{channel.id}/{welcome_config.id}"), 
-            ])
+    await message.edit("", embed=discord.Embed(title="Configuration du bot", 
+                                        description="Un salon a été créé pour la configuration du bot", 
+                                        color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
+                                        components=[
+                                            Button(style=ButtonStyle.URL, label="Lien vers le channel", url=f"https://discord.com/channels/{guild.id}/{channel.id}/{welcome_config.id}"), 
+                                            ])
     logging.info(f"{ctx.author} a commencé la configuration du bot")
     embed=discord.Embed(
                     f"{ctx.author} a commencé la configuration du bot", 
@@ -1089,13 +1169,14 @@ async def on_button_click(interaction: Interaction):
                     await message_embed.delete()
                 except:
                     pass
+                await interaction.message.delete()
                 await message.channel.send(embed=discord.Embed(
                 title="Configuration du bot", 
                 description="Il y a t-il un channel de **logs** ?", 
                     color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
                     components=[[
                 Button(style=ButtonStyle.green, label="Oui", custom_id="yes_logs_channel"), 
-                Button(style=ButtonStyle.red, label="Non", custom_id="yes_logs_channel")
+                Button(style=ButtonStyle.red, label="Non", custom_id="no_logs_channel")
                 ]],
                 type=7)
                 discord_invitation = await channel.create_invite(max_uses=0, max_age=0, reason="Configuration du bot")
@@ -1123,7 +1204,7 @@ async def on_button_click(interaction: Interaction):
         
         with open('config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
-        await interaction.respond(embed=discord.Embed(
+        message = await interaction.respond(embed=discord.Embed(
             title="Configuration du bot", 
             description="Channel **crée**, Il y a t-il un channel de **logs** ?", 
                 color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
@@ -1137,6 +1218,7 @@ async def on_button_click(interaction: Interaction):
         with open('config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
     elif message_custom_id == "yes_logs_channel":
+        await interaction.message.delete()
         with open('config.json') as infile:
                     data = json.load(infile)
         configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
@@ -1183,7 +1265,7 @@ async def on_button_click(interaction: Interaction):
                 await get_channel_id(First_time=False)
 
         await get_channel_id(First_time=True)
-        await asyncio.sleep(20)
+        await asyncio.sleep(10)
         await configserver_channel.delete()
         embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", 
                     color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
@@ -1195,6 +1277,7 @@ async def on_button_click(interaction: Interaction):
         await channel_logs.send(embed=embed)
         logging.info(f"{interaction.author} a terminé la configuration du bot")
     elif message_custom_id== "no_logs_channel":
+        await interaction.message.delete()
         guild: discord.Guild = interaction.guild
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False, send_messages=False),
@@ -1425,16 +1508,29 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-"""@bot.event
+
+@bot.event
 async def on_error(event, *args, **kwargs):
     exc_type, value, traceback = exc_info()
     if exc_type is discord.errors.Forbidden:
         logging.warning(f"{event}, discord.errors.Forbidden")
     elif exc_type is ValueError:
         logging.warning(f"{event}, ValueError")
+    elif exc_type is KeyError:
+        if event == "on_member_join":
+            print("Erreur cool de fou")
+        print("Erreur", event)
+    elif exc_type is discord.errors.NotFound:
+        pass
     else:
-        print(exc_type, value, traceback.tb_frame, args)
-        logging.warning(f"{event}, {exc_type}")"""
+        print(f"""
+        exc_type: {exc_type}\n
+        value: {value}\n
+        traceback.tb_frame: {traceback.tb_frame}\n
+        args: {args}\n
+        """)
+        logging.warning(f"{event}, {exc_type}")
+
 
 @bot.event
 async def on_slash_command_error(ctx, error):

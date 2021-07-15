@@ -1011,14 +1011,15 @@ async def serverinfo(ctx):
 @has_permissions(administrator=True)
 @bot_has_permissions(administrator=True)
 async def config_server(ctx):
-    await ctx.defer()
-    guild: discord.Guild = ctx.message.guild
+    await ctx.defer(hidden=True)
+    guild: discord.Guild = ctx.guild
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         guild.me: discord.PermissionOverwrite(read_messages=True)
     }
     channel = await guild.create_text_channel('configuration-serveur', overwrites=overwrites)
     config_channel = channel.id
+    
     data= {'channel_config': config_channel}
     with open('config.json', 'w') as outfile:
         json.dump(data, outfile, indent=4)

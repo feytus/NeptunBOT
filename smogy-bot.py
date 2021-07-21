@@ -123,11 +123,12 @@ async def check_is_config_on_ready():
     try:
         data['channel_logs']
         logging.info('Channel_logs is config')
-        print(f'{Fore.GREEN}✓ Channel_logs is config')
+        print(f'{Fore.GREEN}✓ Channel_logs is config{Fore.RESET}')
     except:
         print(f"{Fore.RED}✘ Channel_logs n'a pas été configuré")
         logging.warning('Channel_logs is not config')
         channel_logs_is_config = False
+    
 
     if channel_welcome_is_config is False or invite_link_is_config is False or channel_logs_is_config is False:
         return False
@@ -431,7 +432,6 @@ async def ban_list(ctx):
             inline=False)
     await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /ban_list")
-
 
 @slash.slash(name="tempban", description="Bannir temporairement un membre", options=[
                 create_option(
@@ -1560,7 +1560,6 @@ async def help(ctx, command):
         await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
 
-
 @bot.event
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def on_message(message):
@@ -1669,6 +1668,7 @@ async def on_command_error(ctx, error):
         embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
         await ctx.send(embed=embed, hidden=True)
         logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
+
 
 try:
     bot.run(os.getenv("TOKEN"))

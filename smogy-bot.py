@@ -9,6 +9,7 @@ import random
 import aiofiles
 from sys import exc_info
 import json
+from colorama import Fore, Back, Style
 
 from discord.utils import get
 import discord
@@ -81,17 +82,17 @@ async def check_is_config():
     try:
         data['channel_welcome']
     except:
-        logging.warning('✘ Channel_welcome is not config')
+        logging.warning('Channel_welcome is not config')
         channel_welcome_is_config = False
     try:
         data['invite_link']
     except:
-        logging.warning('✘ Invite_link is not config')
+        logging.warning('Invite_link is not config')
         invite_link_is_config = False
     try:
         data['channel_logs']
     except:
-        logging.warning('✘ Channel_logs is not config')
+        logging.warning('Channel_logs is not config')
         channel_logs_is_config = False
     
     if channel_welcome_is_config is False or invite_link_is_config is False or channel_logs_is_config is False:
@@ -105,29 +106,29 @@ async def check_is_config_on_ready():
         data = json.load(infile)
     try:
         data['channel_welcome']
-        logging.info('✓ Channel_welcome is config')
-        print(f'\33[32m ✓ Channel_welcome is config\33[119m')
+        logging.info('Channel_welcome is config')
+        print(f'{Fore.GREEN}✓ Channel_welcome is config')
     except:
-        print(f"\33[91m ✘ Channel_welcome n'a pas été configuré\33[119m")
-        logging.warning('✘ Channel_welcome is not config')
+        print(f"{Fore.RED}✘ Channel_welcome n'a pas été configuré")
+        logging.warning('Channel_welcome is not config')
         channel_welcome_is_config = False
     try:
         data['invite_link']
-        logging.info('✓ Invite_link is config')
-        print(f'\33[32m ✓ Invite_link is config\33[119m')
+        logging.info('Invite_link is config')
+        print(f'{Fore.GREEN}✓ Invite_link is config')
     except:
-        print(f"\33[91m ✘ Invite_link n'a pas été configuré\33[119m")
-        logging.warning('✘ Invite_link is not config')
+        print(f"{Fore.RED}✘ Invite_link n'a pas été configuré")
+        logging.warning('Invite_link is not config')
         invite_link_is_config = False
     try:
         data['channel_logs']
-        logging.info('✓ Channel_logs is config')
-        print('\33[32m ✓ Channel_logs is config\33[119m')
+        logging.info('Channel_logs is config')
+        print(f'{Fore.GREEN}✓ Channel_logs is config')
     except:
-        print("\33[91m✘ Channel_logs n'a pas été configuré\33[119m")
-        logging.warning('✘ Channel_logs is not config')
+        print(f"{Fore.RED}✘ Channel_logs n'a pas été configuré")
+        logging.warning('Channel_logs is not config')
         channel_logs_is_config = False
-    
+
     if channel_welcome_is_config is False or invite_link_is_config is False or channel_logs_is_config is False:
         return False
 
@@ -176,24 +177,26 @@ async def on_ready():
         content = file.read()
         if content == "":
             logging.warning("Le bot n'a pas été configuré !")
-            print('\33[91m' + error_ + '\33[0m')
+            print(f'{Fore.RED} {error_}')
             print("Vous devez absolument configurer le bot avez la commande /config_server !")
+            Fore.RESET
         else:
-            print('\33[36m' + smogy_bot + '\33[0m')
+            print(Fore.CYAN + smogy_bot)
     except FileNotFoundError:
         logging.warning("Le bot n'a pas été configuré !")
         open("config.json", "a")
-        print('\33[91m' + error_ + '\33[0m')
+        print('{Fore.RED}' + error_ + '\33[0m')
         print("Vous devez absolument configurer le bot avez la commande /config_server !")
 
     if await check_is_config_on_ready() is False:
-        print(error, "\nVous devez configurer le bot pour le discord en utilisant la commande /config_server")
+        print(Fore.RED + error_, "\nVous devez configurer le bot pour le discord en utilisant la commande /config_server !" + Fore.RESET)
     try:
         await sanctions_files()
     except:
         pass
     await bot.change_presence(activity=discord.Streaming(name="/help", url="https://www.twitch.tv/Smogy"))
     logging.info("Bot pret !")
+
 
 @bot.event
 @bot_has_permissions(send_messages=True, read_messages=True, view_channel=True)
@@ -216,6 +219,7 @@ async def on_member_join(member: discord.Member):
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel.send(embed=embed)
+
 
 @slash.slash(name="clear", description="Effacer des messages", options=[
                 create_option(
@@ -427,6 +431,7 @@ async def ban_list(ctx):
             inline=False)
     await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /ban_list")
+
 
 @slash.slash(name="tempban", description="Bannir temporairement un membre", options=[
                 create_option(
@@ -661,6 +666,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         await ctx.send(embed=embed, hidden=True)
     async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 4 {raison}\n")
+
 
 async def createRoleMute(ctx):
     role_mute = await ctx.guild.create_role(name = "mute",
@@ -1006,19 +1012,15 @@ async def warn(ctx, user: discord.User, raison):
     if await check_is_config() is False:
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
-    if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
-        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     with open('config.json') as infile:
         data = json.load(infile)
-    channel_logs = await bot.fetch_channel(data['channel_logs'])
+    channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
     color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 1,raison))
     except KeyError:
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 1,raison)]]
-
     async with aiofiles.open(f"sanctions/{ctx.guild.id}.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 1 {raison}\n")
     logging.info(f"{ctx.author} a warn {user}, raison : {raison}")
@@ -1035,7 +1037,7 @@ async def warn(ctx, user: discord.User, raison):
     embed_logs.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_logs.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel_logs.send(embed=embed_logs)
-    
+
 
 async def get_sanction_id(sanction_id):
     if sanction_id==1:
@@ -1089,7 +1091,7 @@ async def sanctions(ctx, user: discord.User):
 
 @slash.slash(name="server_info", description="Permet d'obtenir des informations sur le discord")
 @bot_has_permissions(send_messages=True, read_messages=True)
-async def server_info(ctx):
+async def server_info(ctx: discord.ext.commands.context.Context):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
@@ -1099,35 +1101,19 @@ async def server_info(ctx):
         guild_description="Aucune description"
     else:
         guild_description=guild.description
-    embed=discord.Embed(title="Information du serveur\nSmogy", description=guild_description, color=get_color(0xedda5f, 0xedab5f, 0xbb76f5))
+    embed=discord.Embed(title=f"Information du serveur\n{guild.name}", description=guild_description, color=get_color(0xedda5f, 0xedab5f, 0xbb76f5))
     embed.add_field(name="Owner", value=guild.owner)
     embed.add_field(name="Serveur ID", value=guild.id)
-    embed.add_field(name="Nombre de membre", value=guild.member_count, inline=True)
+    embed.add_field(name="Nombre de membres", value=guild.member_count, inline=True)
     embed.add_field(name="Nombre de salons", value=len(guild.channels), inline=True)
     embed.add_field(name="Nombre de salons vocaux", value=len(guild.voice_channels), inline=False)
     embed.add_field(name="Nombre de salons textuels", value=len(guild.text_channels), inline=True)
     embed.add_field(name="Création du serveur", value=guild.created_at, inline=False)
+    embed.set_image(url=guild.icon_url)
+    embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
     await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /server_info")
 
-@slash.slash(name="test", description="test command")
-async def test(ctx):
-    await ctx.defer(hidden=True)
-    await ctx.send(embed=discord.Embed(title="Configuration du bot", 
-                                        description="Un salon a été créé pour la configuration du bot", 
-                                        color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
-                                        components=[
-                                    create_actionrow(
-                                        create_button(style=ButtonStyle.URL, url="https://discord.com/channels/{guild.id}/{channel.id}/{welcome_config.id}", label="Lien vers le salon"))
-                                    ])
-    '''await ctx.send(embed=discord.Embed(title="Configuration du bot", 
-                                        description="Un salon a été créé pour la configuration du bot", 
-                                        color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
-                                        components=[
-                                            create_actionrow(   
-                                                create_button(  
-                                                    Button(style=ButtonStyle.URL, url="https://google.fr", label="Lien vers le salon"), 
-                                            ))])'''
 
 @slash.slash(name="config_server", description="Permet de configurer le bot pour le serveur discord")
 @has_permissions(administrator=True)
@@ -1174,6 +1160,7 @@ async def config_server(ctx):
     except:
         pass
     
+
 @bot.event
 async def on_button_click(interaction: Interaction):
     with open('config.json') as infile:
@@ -1420,6 +1407,10 @@ async def on_button_click(interaction: Interaction):
                     value="warn"
                 ),
                 create_choice(
+                    name="server_info",
+                    value="server_info"
+                ),
+                create_choice(
                     name="config_server",
                     value="config_server"
                 )
@@ -1619,31 +1610,65 @@ async def on_error(event, *args, **kwargs):
         )
         logging.warning(f"{event}, {exc_type}")
 
-
 @bot.event
-async def on_slash_command_error(ctx, error):
+async def on_slash_command_error(ctx, error: discord.errors):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
         logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
     elif isinstance(error, discord.errors.HTTPException):
         pass
     elif isinstance(error, MissingPermissions):
-        embed=discord.Embed(title="Erreur", description=f"{error}", color=get_color(0xf54531, 0xf57231, 0xf53145))
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
         embed.add_field(name="Permissions requises", value=f"**{error.missing_perms[0]}**")
         await ctx.send(embed=embed, hidden=True)
         logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
     elif isinstance(error, commands.BotMissingPermissions):
-        embed=discord.Embed(title="Erreur", description=f"{error}", color=get_color(0xf54531, 0xf57231, 0xf53145))
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
         embed.add_field(name="Permission(s) requise(s)", value=f"**{error.missing_perms[0]}**")
         await ctx.send(embed=embed, hidden=True)
         logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
-    elif isinstance(error, discord.ext.commands.errors.CommandInvokeError):
+    elif isinstance(error, commands.errors.CommandInvokeError):
         pass
+    elif isinstance(error, commands.errors.UserNotFound):
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
+    elif isinstance(error, errors.PrivilegedIntentsRequired):
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
+        logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
+    elif isinstance(error, discord.errors.HTTPException):
         pass
+    elif isinstance(error, MissingPermissions):
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
+        embed.add_field(name="Permissions requises", value=f"**{error.missing_perms[0]}**")
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
+    elif isinstance(error, commands.BotMissingPermissions):
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
+        embed.add_field(name="Permission(s) requise(s)", value=f"**{error.missing_perms[0]}**")
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
+    elif isinstance(error, commands.errors.CommandInvokeError):
+        pass
+    elif isinstance(error, commands.errors.UserNotFound):
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
+    elif isinstance(error, errors.PrivilegedIntentsRequired):
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
+    else:
+        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
 
 try:
     bot.run(os.getenv("TOKEN"))

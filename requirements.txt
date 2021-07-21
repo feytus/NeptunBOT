@@ -7,3 +7,4 @@ pynacl
 youtube_dl
 aiofiles
 pyfade
+colorama

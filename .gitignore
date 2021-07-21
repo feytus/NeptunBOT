@@ -1,5 +1,8 @@
 .DS_Store
+.env
+workspace.code-workspace
 token
+idea
 
 # Configuration file
 config.json

@@ -1,6 +1,4 @@
-import dis
 from inspect import Traceback
-import sys
 from time import *
 import logging
 from logging import INFO, error, DEBUG, exception
@@ -8,14 +6,11 @@ import asyncio
 import os
 import datetime
 import random
-import traceback
 import aiofiles
-import pickle
 from sys import exc_info
 import json
-from discord.utils import get
-from pyfade import Colors, Fade
 
+from discord.utils import get
 import discord
 from discord import message
 from discord import permissions
@@ -51,7 +46,7 @@ bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
 load_dotenv(dotenv_path="token")
 
-error = """
+error_ = """
  █████╗ ████████╗████████╗███████╗███╗   ██╗████████╗██╗ ██████╗ ███╗   ██╗
 ██╔══██╗╚══██╔══╝╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝██║██╔═══██╗████╗  ██║
 ███████║   ██║      ██║   █████╗  ██╔██╗ ██║   ██║   ██║██║   ██║██╔██╗ ██║
@@ -59,6 +54,15 @@ error = """
 ██║  ██║   ██║      ██║   ███████╗██║ ╚████║   ██║   ██║╚██████╔╝██║ ╚████║
 ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 """
+
+smogy_bot = """
+███████╗███╗   ███╗ ██████╗  ██████╗██╗   ██╗    ██████╗  ██████╗ ████████╗
+██╔════╝████╗ ████║██╔═══██╗██╔════╝╚██╗ ██╔╝    ██╔══██╗██╔═══██╗╚══██╔══╝
+███████╗██╔████╔██║██║   ██║██║  ███╗╚████╔╝     ██████╔╝██║   ██║   ██║   
+╚════██║██║╚██╔╝██║██║   ██║██║   ██║ ╚██╔╝      ██╔══██╗██║   ██║   ██║   
+███████║██║ ╚═╝ ██║╚██████╔╝╚██████╔╝  ██║       ██████╔╝╚██████╔╝   ██║   
+╚══════╝╚═╝     ╚═╝ ╚═════╝  ╚═════╝   ╚═╝       ╚═════╝  ╚═════╝    ╚═╝   
+        """
 try:
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
@@ -67,29 +71,6 @@ except FileNotFoundError:
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
 
-try:
-    file = open("config.json", "r")
-    content = file.read()
-    if content == "":
-        logging.warning("Le bot n'a pas été configuré !")
-        print(Fade.Vertical(Colors.red_to_blue, error))
-        print("Vous devez absolument configurer le bot avez la commande /config_server !")
-    else:
-        smogy_bot = """
-███████╗███╗   ███╗ ██████╗  ██████╗██╗   ██╗    ██████╗  ██████╗ ████████╗
-██╔════╝████╗ ████║██╔═══██╗██╔════╝╚██╗ ██╔╝    ██╔══██╗██╔═══██╗╚══██╔══╝
-███████╗██╔████╔██║██║   ██║██║  ███╗╚████╔╝     ██████╔╝██║   ██║   ██║   
-╚════██║██║╚██╔╝██║██║   ██║██║   ██║ ╚██╔╝      ██╔══██╗██║   ██║   ██║   
-███████║██║ ╚═╝ ██║╚██████╔╝╚██████╔╝  ██║       ██████╔╝╚██████╔╝   ██║   
-╚══════╝╚═╝     ╚═╝ ╚═════╝  ╚═════╝   ╚═╝       ╚═════╝  ╚═════╝    ╚═╝   
-        """
-        print(Fade.Vertical(Colors.green_to_blue, smogy_bot))
-
-except FileNotFoundError:
-    logging.warning("Le bot n'a pas été configuré !")
-    open("config.json", "a")
-    print(Fade.Vertical(Colors.red_to_blue, error))
-    print("Vous devez absolument configurer le bot avez la commande /config_server !")
 
 async def check_is_config():
     channel_logs_is_config = None
@@ -99,27 +80,52 @@ async def check_is_config():
         data = json.load(infile)
     try:
         data['channel_welcome']
-        logging.info('✓ Channel_welcome is config')
-        print('✓ Channel_welcome is config')
     except:
-        print("✘ Channel_welcome n'a pas été configuré")
-        logging.warning('✓ Channel_welcome is not config')
+        logging.warning('✘ Channel_welcome is not config')
+        channel_welcome_is_config = False
+    try:
+        data['invite_link']
+    except:
+        logging.warning('✘ Invite_link is not config')
+        invite_link_is_config = False
+    try:
+        data['channel_logs']
+    except:
+        logging.warning('✘ Channel_logs is not config')
+        channel_logs_is_config = False
+    
+    if channel_welcome_is_config is False or invite_link_is_config is False or channel_logs_is_config is False:
+        return False
+
+async def check_is_config_on_ready():
+    channel_logs_is_config = None
+    channel_welcome_is_config = None
+    invite_link_is_config = None
+    with open('config.json') as infile:
+        data = json.load(infile)
+    try:
+        data['channel_welcome']
+        logging.info('✓ Channel_welcome is config')
+        print(f'\33[32m ✓ Channel_welcome is config\33[119m')
+    except:
+        print(f"\33[91m ✘ Channel_welcome n'a pas été configuré\33[119m")
+        logging.warning('✘ Channel_welcome is not config')
         channel_welcome_is_config = False
     try:
         data['invite_link']
         logging.info('✓ Invite_link is config')
-        print('✓ Invite_link is config')
+        print(f'\33[32m ✓ Invite_link is config\33[119m')
     except:
-        print("✘ Invite_link n'a pas été configuré")
-        logging.warning('✓ Invite_link is not config')
+        print(f"\33[91m ✘ Invite_link n'a pas été configuré\33[119m")
+        logging.warning('✘ Invite_link is not config')
         invite_link_is_config = False
     try:
         data['channel_logs']
         logging.info('✓ Channel_logs is config')
-        print('✓ Channel_logs is config')
+        print('\33[32m ✓ Channel_logs is config\33[119m')
     except:
-        print("✘ Channel_logs n'a pas été configuré")
-        logging.warning('✓ Channel_logs is not config')
+        print("\33[91m✘ Channel_logs n'a pas été configuré\33[119m")
+        logging.warning('✘ Channel_logs is not config')
         channel_logs_is_config = False
     
     if channel_welcome_is_config is False or invite_link_is_config is False or channel_logs_is_config is False:
@@ -165,8 +171,23 @@ def get_color(color1, color2, color3):
 
 @bot.event
 async def on_ready():
-    if await check_is_config() is False:
-        print(Fade.Vertical(Colors.red_to_blue, error), "\nVous devez configurer le bot pour le discord en utilisant la commande /config_server")
+    try:
+        file = open("config.json", "r")
+        content = file.read()
+        if content == "":
+            logging.warning("Le bot n'a pas été configuré !")
+            print('\33[91m' + error_ + '\33[0m')
+            print("Vous devez absolument configurer le bot avez la commande /config_server !")
+        else:
+            print('\33[36m' + smogy_bot + '\33[0m')
+    except FileNotFoundError:
+        logging.warning("Le bot n'a pas été configuré !")
+        open("config.json", "a")
+        print('\33[91m' + error_ + '\33[0m')
+        print("Vous devez absolument configurer le bot avez la commande /config_server !")
+
+    if await check_is_config_on_ready() is False:
+        print(error, "\nVous devez configurer le bot pour le discord en utilisant la commande /config_server")
     try:
         await sanctions_files()
     except:
@@ -380,15 +401,15 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
                 logging.info(f"{ctx.author} a dé-banni {user}, raison : {raison}")
                 return True
     if await is_banned() != True:    
-        await ctx.send(embed=discord.Embed(description=f":warning: Aucun membre banni ne correspond à : **{user_base}** :negative_squared_cross_mark: Faites **/banlist** pour voir la liste des membres bannis."
+        await ctx.send(embed=discord.Embed(description=f":warning: Aucun membre banni ne correspond à : **{user_base}** :negative_squared_cross_mark: Faites **/ban_list** pour voir la liste des membres bannis."
         , color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
         logging.warning(f"{ctx.author} a utilisé la commande '/unban {user_base}', Aucun membre correspondant à : {user_base}")
 
 
-@slash.slash(name="banlist", description="Permet d'obtenir la liste des membres bannis")
+@slash.slash(name="ban_list", description="Permet d'obtenir la liste des membres bannis")
 @has_permissions(ban_members=True)
 @bot_has_permissions(send_messages=True, read_messages=True, manage_guild=True)
-async def banlist(ctx):
+async def ban_list(ctx):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
@@ -396,13 +417,16 @@ async def banlist(ctx):
     color = get_color(0xc43f3f, 0xc45e3f, 0xc43f72)
     guild = ctx.guild
     banned_users_list = await guild.bans()
-    embed = discord.Embed(title="Voici la liste des membres bannis du discord", color=color)
-    for banned_users in banned_users_list:
-        embed.add_field(name=f"{banned_users.user.name}#{banned_users.user.discriminator}",
-         value=f"Raison du ban : **{banned_users.reason}**, ID : **{banned_users.user.id}**",
-          inline=False)
+    if len(banned_users_list) == 0:
+        embed=discord.Embed(title="Aucun membre n'est banni sur le serveur", color=color)
+    else:
+        embed = discord.Embed(title="Voici la liste des membres bannis du discord", color=color)
+        for banned_users in banned_users_list:
+            embed.add_field(name=f"{banned_users.user.name}#{banned_users.user.discriminator}",
+            value=f"Raison du ban : **{banned_users.reason}**, ID : **{banned_users.user.id}**",
+            inline=False)
     await ctx.send(embed=embed, hidden=True)
-    logging.info(f"{ctx.author} a utilisé la commande /banlist")
+    logging.info(f"{ctx.author} a utilisé la commande /ban_list")
 
 @slash.slash(name="tempban", description="Bannir temporairement un membre", options=[
                 create_option(
@@ -1050,7 +1074,7 @@ async def sanctions(ctx, user: discord.User):
             color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
             sanction_name = await get_sanction_id(sanction_id)
             author = ctx.guild.get_member(author_id)
-            embed=discord.Embed(title=f"{i}. :warning: {sanction_name}", color=color)
+            embed=discord.Embed(title=f"{i}. {sanction_name}", description=":warning:", color=color)
             embed.add_field(name="Raison", value=raison)
             embed.add_field(name="Modérateur", value=author.mention)
             await ctx.send(embed=embed, hidden=True)
@@ -1141,10 +1165,7 @@ async def config_server(ctx):
     embed=discord.Embed(
                     f"{ctx.author} a commencé la configuration du bot", 
                     color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
-    embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
-    embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
-    embed.add_field(name="Administateur", value=ctx.author, inline=False)
-    embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+    logging.info(f"{ctx.author} a utilisé la commande /config_server {user}")
     with open('config.json') as infile:
         data = json.load(infile)
     try:
@@ -1391,8 +1412,8 @@ async def on_button_click(interaction: Interaction):
                     name="report",
                     value="report"),
                 create_choice(
-                    name="banlist",
-                    value="banlist"
+                    name="ban_list",
+                    value="ban_list"
                 ),
                 create_choice(
                     name="warn",
@@ -1428,15 +1449,15 @@ async def help(ctx, command):
         , value="Cette commande permet dé-mute un membre du discord, pour plus de renseignement faites **/help unmute**", inline=False)
         embed.add_field(name="``/report``"
         , value="Cette commande permet de report un membre du discord pour plus de renseignement faites **/help report**", inline=False)
-        embed.add_field(name="``/banlist``"
-        , value="Cette commande permet d'obtenir la listes des membres bannis du discord, pour plus de renseignement faites **/help banlist**", inline=False)
+        embed.add_field(name="``/ban_list``"
+        , value="Cette commande permet d'obtenir la listes des membres bannis du discord, pour plus de renseignement faites **/help ban_list**", inline=False)
         embed.add_field(name="``/sanctions``"
         , value="Cette commande permet d'obtenir la listes des sanctions d'un membre du discord, pour plus de renseignement faites **/help sanctions**", inline=False)
         embed.add_field(name="``/warn``"
-        , value="Cette commande permet d'avertir un membre du discord, pour plus de renseignement faites **/help banlist**", inline=False)
+        , value="Cette commande permet d'avertir un membre du discord, pour plus de renseignement faites **/help ban_list**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         embed.add_field(name="``/server_info``"
-        , value="Cette commande permet d'obtenir des informations sur le discord, pour plus de renseignement faites **/help server_info**", inline=False)
+        , value="Cette commande permet d'obtenir des informations sur le discord, pour plus de renseignement faites **/help server_info **", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         embed.add_field(name="``/config_server``"
         , value="Cette commande permet de configurer le bot pour le discord, pour plus de renseignement faites **/help config_server**", inline=False)
@@ -1506,12 +1527,12 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/report [membre] [raison] [*preuve: :warning: url vers une image :warning:]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
-    elif command == "banlist":
+    elif command == "ban_list":
         author = ctx.author
-        embed= discord.Embed(title="Commande banlist", description="***/banlist***",
+        embed= discord.Embed(title="Commande ban_list", description="***/ban_list***",
         color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir la liste des membres bannis du discord", inline=False)
-        embed.add_field(name="Utilisation", value="``/banlist``", inline=False)
+        embed.add_field(name="Utilisation", value="``/ban_list``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)      
     elif command == "sanctions":
@@ -1581,11 +1602,13 @@ async def on_error(event, *args, **kwargs):
     elif exc_type is ValueError:
         logging.warning(f"{event}, ValueError")
     elif exc_type is KeyError:
-        if event == "on_member_join":
-            print("Erreur cool de fou")
-        print("Erreur", event)
+        pass
     elif exc_type is discord.errors.NotFound:
         pass
+    elif exc_type is json.decoder.JSONDecodeError:
+        data= {}
+        with open('config.json', 'w') as outfile:
+            json.dump(data, outfile, indent=4)
     else:
         print(f"""
         exc_type: {exc_type}\n

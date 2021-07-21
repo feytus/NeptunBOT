@@ -13,6 +13,7 @@ import aiofiles
 import pickle
 from sys import exc_info
 import json
+from discord.utils import get
 from pyfade import Colors, Fade
 
 import discord
@@ -29,6 +30,8 @@ from discord_slash.model import ButtonStyle
 from dotenv import load_dotenv
 from discord_slash.utils.manage_commands import create_option, create_choice
 from discord_components import DiscordComponents, Button, Interaction, component
+from discord_slash.utils.manage_components import create_button, create_actionrow
+from discord_slash.model import ButtonStyle
 
 default_intents = discord.Intents.default()
 default_intents.members=True
@@ -185,7 +188,7 @@ async def on_member_join(member: discord.Member):
         owner = await bot.fetch_user(guild.owner_id)
         await owner.send(embed=discord.Embed(
             title="Erreur", 
-            description=f":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server`` sur votre discord **{guild.name}**", 
+            description=f":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server`` sur votre discord **{guild.name}**", 
             color=get_color(0xf54531, 0xf57231, 0xf53145)))
     embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le discord de **Smogy** !", color=color)
     embed.set_author(name="Smogy BOT", url="https://www.twitch.tv/Smogy", icon_url="https://i.imgur.com/ChQwvkA.png")
@@ -205,7 +208,7 @@ async def on_member_join(member: discord.Member):
 async def clear(ctx, nombre: int):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0xfff04f, 0x554fff, 0xff6eff)
     with open('config.json') as infile:
@@ -241,7 +244,7 @@ async def clear(ctx, nombre: int):
 async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
@@ -292,7 +295,7 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
 async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
@@ -348,7 +351,7 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
 async def unban(ctx, user, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x32a852, 0x5eff8a, 0x3fc463)
     with open('config.json') as infile:
@@ -388,7 +391,7 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
 async def banlist(ctx):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0xc43f3f, 0xc45e3f, 0xc43f72)
     guild = ctx.guild
@@ -449,7 +452,7 @@ async def banlist(ctx):
 async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
@@ -699,7 +702,7 @@ async def getRoleMute(ctx):
 async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
@@ -880,7 +883,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
 async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     embed = discord.Embed(title=f"{user} été dé-mute !",
                               description="Il peut maintenant re-parler dans le chat !",
@@ -933,7 +936,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
 async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve fournie"):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x34ebe5, 0x2f5da, 0x42f575)
     with open('config.json') as infile:
@@ -977,10 +980,10 @@ async def on_guild_join(guild):
 async def warn(ctx, user: discord.User, raison):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     with open('config.json') as infile:
         data = json.load(infile)
@@ -1034,9 +1037,6 @@ async def get_sanction_id(sanction_id):
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def sanctions(ctx, user: discord.User):
     await ctx.defer(hidden=True)
-    if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
-        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x5efffc, 0x5eff86, 0x7a75ff)
     embed_title = discord.Embed(title="Sanctions", description=f"Listes des sanctions de **{user}**", colour=color)
     try:
@@ -1063,12 +1063,12 @@ async def sanctions(ctx, user: discord.User):
     logging.info(f"{ctx.author} a utilisé la commande /sanctions {user}")
  
 
-@slash.slash(name="serverinfo", description="Permet d'obtenir des informations sur le discord")
+@slash.slash(name="server_info", description="Permet d'obtenir des informations sur le discord")
 @bot_has_permissions(send_messages=True, read_messages=True)
-async def serverinfo(ctx):
+async def server_info(ctx):
     await ctx.defer(hidden=True)
     if await check_is_config() is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer exécutez la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     guild: discord.Guild = ctx.guild
     if guild.description == None:
@@ -1084,15 +1084,32 @@ async def serverinfo(ctx):
     embed.add_field(name="Nombre de salons textuels", value=len(guild.text_channels), inline=True)
     embed.add_field(name="Création du serveur", value=guild.created_at, inline=False)
     await ctx.send(embed=embed, hidden=True)
-    logging.info(f"{ctx.author} a utilisé la commande /serverinfo")
+    logging.info(f"{ctx.author} a utilisé la commande /server_info")
 
+@slash.slash(name="test", description="test command")
+async def test(ctx):
+    await ctx.defer(hidden=True)
+    await ctx.send(embed=discord.Embed(title="Configuration du bot", 
+                                        description="Un salon a été créé pour la configuration du bot", 
+                                        color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
+                                        components=[
+                                    create_actionrow(
+                                        create_button(style=ButtonStyle.URL, url="https://discord.com/channels/{guild.id}/{channel.id}/{welcome_config.id}", label="Lien vers le salon"))
+                                    ])
+    '''await ctx.send(embed=discord.Embed(title="Configuration du bot", 
+                                        description="Un salon a été créé pour la configuration du bot", 
+                                        color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
+                                        components=[
+                                            create_actionrow(   
+                                                create_button(  
+                                                    Button(style=ButtonStyle.URL, url="https://google.fr", label="Lien vers le salon"), 
+                                            ))])'''
 
-@bot.command(name="config_server", description="Permet de configurer le bot pour le serveur discord")
+@slash.slash(name="config_server", description="Permet de configurer le bot pour le serveur discord")
 @has_permissions(administrator=True)
 @bot_has_permissions(administrator=True)
 async def config_server(ctx):
-    #message = await ctx.defer(hidden=True)
-    message = await ctx.send("Je réfléchis ...")
+    await ctx.defer(hidden=True)
     guild: discord.Guild = ctx.guild
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -1111,12 +1128,15 @@ async def config_server(ctx):
             Button(style=ButtonStyle.green, label="Oui", custom_id="yes_welcome_channel"), 
             Button(style=ButtonStyle.red, label="Non", custom_id="no_welcome_channel")
             ]])
-    await message.edit("", embed=discord.Embed(title="Configuration du bot", 
+    await ctx.send(embed=discord.Embed(title="Configuration du bot", 
                                         description="Un salon a été créé pour la configuration du bot", 
-                                        color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
+                                        color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
                                         components=[
-                                            Button(style=ButtonStyle.URL, label="Lien vers le channel", url=f"https://discord.com/channels/{guild.id}/{channel.id}/{welcome_config.id}"), 
-                                            ])
+                                    create_actionrow(
+                                        create_button(style=ButtonStyle.URL, 
+                                        url=f"https://discord.com/channels/{guild.id}/{channel.id}/{welcome_config.id}", 
+                                        label="Lien vers le salon"))
+                                    ])
     logging.info(f"{ctx.author} a commencé la configuration du bot")
     embed=discord.Embed(
                     f"{ctx.author} a commencé la configuration du bot", 
@@ -1138,6 +1158,7 @@ async def on_button_click(interaction: Interaction):
     with open('config.json') as infile:
         data = json.load(infile)
     message_custom_id = interaction.custom_id 
+    configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
     if message_custom_id== "yes_welcome_channel":
         await interaction.respond(embed=discord.Embed(
             title="Configuration du bot", 
@@ -1217,18 +1238,21 @@ async def on_button_click(interaction: Interaction):
         data.update({'invite_link': discord_invitation.url})
         with open('config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
+
     elif message_custom_id == "yes_logs_channel":
         await interaction.message.delete()
         with open('config.json') as infile:
-                    data = json.load(infile)
+            data = json.load(infile)
         configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
-        await interaction.respond(embed=discord.Embed(
-            title="Configuration du bot", 
+        message = await configserver_channel.send(embed=discord.Embed(
+            title="Configuration du bot",
             description="Entrez l'**id** du channel de logs", 
                 color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
             components=[],
             type=7)
-        async def get_channel_id(First_time=True):
+        async def get_channel_id(First_time: bool):
+            with open('config.json') as infile:
+                data = json.load(infile)
             try:
                 if First_time == False:
                     embed=discord.Embed(
@@ -1238,15 +1262,15 @@ async def on_button_click(interaction: Interaction):
                         components=[])
                     message_embed=await configserver_channel.send(embed=embed)
                 message: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
-                
                 channel_id = await bot.fetch_channel(message.content)
                 data.update({'channel_logs': channel_id.id})
-                
                 with open('config.json', 'w') as outfile:
                     json.dump(data, outfile, indent=4)
+                    outfile.close()
                 await message.delete()
                 try:
                     await message_embed.delete()
+                    await message.delete()
                 except:
                     pass
                 embed=discord.Embed(
@@ -1260,22 +1284,34 @@ async def on_button_click(interaction: Interaction):
                 return channel_id
             except asyncio.TimeoutError:
                 await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Vous n'avez pas repondu à la question", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+                await asyncio.sleep(10)
+                await interaction.channel.delete()
             except discord.errors.HTTPException:
                 await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Aucun channel ne correspond à l'id : **{message.content}**", color=get_color(0xf54531, 0xf57231, 0xf53145)))
                 await get_channel_id(First_time=False)
-
         await get_channel_id(First_time=True)
         await asyncio.sleep(10)
-        await configserver_channel.delete()
+        try:
+            await configserver_channel.delete()
+        except discord.errors.NotFound:
+            pass
+        with open('config.json') as infile:
+            data = json.load(infile)
+        try:
+            await message.delete()
+        except:
+            pass
         embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", 
                     color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
         embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
         embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
-        embed.add_field(name="Administateur", value=interaction.author, inline=False)
+        embed.add_field(name="Administateur", value=interaction.author.mention, inline=False)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+        embed.set_thumbnail(url=interaction.author.avatar_url)
         channel_logs = await bot.fetch_channel(data['channel_logs'])
         await channel_logs.send(embed=embed)
         logging.info(f"{interaction.author} a terminé la configuration du bot")
+
     elif message_custom_id== "no_logs_channel":
         await interaction.message.delete()
         guild: discord.Guild = interaction.guild
@@ -1297,14 +1333,16 @@ async def on_button_click(interaction: Interaction):
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
         await interaction.respond(embed=embed)
         embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
-        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>")
-        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>")
-        embed.add_field(name="Administateur", value=interaction.author.mention)
+        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
+        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
+        embed.add_field(name="Administateur", value=interaction.author.mention, inline=False)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+        embed.set_thumbnail(url=interaction.author.avatar_url)
         await channel.send(embed=embed)
         logging.info(f"{interaction.author} a terminé la configuration du bot")
         await asyncio.sleep(10)
         await interaction.channel.delete()
+
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -1359,6 +1397,10 @@ async def on_button_click(interaction: Interaction):
                 create_choice(
                     name="warn",
                     value="warn"
+                ),
+                create_choice(
+                    name="config_server",
+                    value="config_server"
                 )
                 ]),
              ])
@@ -1392,6 +1434,12 @@ async def help(ctx, command):
         , value="Cette commande permet d'obtenir la listes des sanctions d'un membre du discord, pour plus de renseignement faites **/help sanctions**", inline=False)
         embed.add_field(name="``/warn``"
         , value="Cette commande permet d'avertir un membre du discord, pour plus de renseignement faites **/help banlist**", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        embed.add_field(name="``/server_info``"
+        , value="Cette commande permet d'obtenir des informations sur le discord, pour plus de renseignement faites **/help server_info**", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        embed.add_field(name="``/config_server``"
+        , value="Cette commande permet de configurer le bot pour le discord, pour plus de renseignement faites **/help config_server**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     elif command == "clear":
@@ -1482,6 +1530,22 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/warn [membre] [raison]``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
+    elif command == "server_info":
+        author = ctx.author
+        embed= discord.Embed(title="Commande configuration", description="***/server_info***",
+        color=color)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir des informations sur le serveur", inline=False)
+        embed.add_field(name="Utilisation", value="``/server_info``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+    elif command == "config_server":
+        author = ctx.author
+        embed= discord.Embed(title="Commande configuration", description="***/config_server***",
+        color=color)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet de configurer le bot pour le serveur", inline=False)
+        embed.add_field(name="Utilisation", value="``/config_server``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
 
 
@@ -1528,7 +1592,8 @@ async def on_error(event, *args, **kwargs):
         value: {value}\n
         traceback.tb_frame: {traceback.tb_frame}\n
         args: {args}\n
-        """)
+        """
+        )
         logging.warning(f"{event}, {exc_type}")
 
 

@@ -1,7 +1,13 @@
-config
-upload-server.sh
 .DS_Store
-test.py
+token
 
+# Configuration file
+config.json
+
+# folder
 /logs/
 /sanctions/
+
+# test file
+test.py
+test.json

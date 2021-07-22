@@ -30,9 +30,10 @@ from discord_slash.utils.manage_components import create_button, create_actionro
 from discord_slash.model import ButtonStyle
 
 default_intents = discord.Intents.default()
-default_intents.members=True
 
-bot = commands.Bot(command_prefix="/", intents=default_intents)
+all_intents: discord.Intents = discord.Intents.all()
+
+bot = commands.Bot(command_prefix="/", intents=all_intents)
 bot.remove_command("help")
 slash = SlashCommand(bot, sync_commands=True)
 
@@ -215,7 +216,7 @@ async def on_member_join(member: discord.Member):
             title="Erreur", 
             description=f":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server`` sur votre discord **{guild.name}**", 
             color=get_color(0xf54531, 0xf57231, 0xf53145)))
-    embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le discord de **Smogy** !", color=color)
+    embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le serveur de **Smogy** !", color=color)
     embed.set_author(name="Smogy BOT", url="https://www.twitch.tv/Smogy", icon_url="https://i.imgur.com/ChQwvkA.png")
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -1081,15 +1082,45 @@ async def sanctions(ctx, user: discord.User):
             embed.add_field(name="Modérateur", value=author.mention)
             await ctx.send(embed=embed, hidden=True)
             i += 1
-
     except KeyError: # no warnings
         embed_title.add_field(name=":white_check_mark:", value="Ce membre n'a aucune sanction !")
         embed_title.set_footer(text=user, icon_url=user.avatar_url)
         await ctx.send(embed=embed_title, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /sanctions {user}")
- 
 
-@slash.slash(name="server_info", description="Permet d'obtenir des informations sur le discord")
+@slash.slash(name="user_info", description="Permet d'obtenir des informations à propos d'un membre sur le serveur")
+@has_permissions(manage_roles=True)
+async def user_info(ctx, user: discord.Member):
+    ctx.defer(hidden=True)
+    guild: discord.Guild = ctx.guild
+    embed=discord.Embed(title="User informations", description=f"**Informations** sur {user.mention}", color=get_color(0x42c5f5, 0xf54275, 0x5bfc58))
+    embed.add_field(name="Pseudo complet", value=user, inline=True)
+    embed.add_field(name="ID", value=user.id, inline=True)
+    embed.add_field(name="Roles sur le serveur", value="```Liste de ses rôles```", inline=False)
+    for role in user.roles:
+        if role.id == ctx.guild.id:
+            pass
+        else:
+            embed.add_field(name=role, value=f"<@&{role.id}>", inline=False)
+    if user.desktop_status is Status.online:
+        status = ":green_circle: En ligne"
+    elif user.desktop_status is Status.offline:
+        status = ":black_circle: Hors ligne"
+    elif user.desktop_status is Status.do_not_disturb:
+        status = ":red_circle: Ne pas déranger"
+    elif user.desktop_status is Status.idle:
+        status = ":orange_circle: Inactif"
+    embed.add_field(name="Statut", value=status)
+    for booster in guild.premium_subscribers:
+        if user is booster:
+            embed.add_field(name="Serveur booster", value="Boost le serveur")
+    embed.add_field(name="A rejoint le serveur le", value=user.joined_at)
+    embed.set_thumbnail(url=user.avatar_url)
+    await ctx.send(embed=embed)
+    logging.info(f"{ctx.author} a utilisé la commande : /user_info {user}")
+
+
+@slash.slash(name="server_info", description="Permet d'obtenir des informations sur le serveur")
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def server_info(ctx: discord.ext.commands.context.Context):
     await ctx.defer(hidden=True)
@@ -1101,7 +1132,7 @@ async def server_info(ctx: discord.ext.commands.context.Context):
         guild_description="Aucune description"
     else:
         guild_description=guild.description
-    embed=discord.Embed(title=f"Information du serveur\n{guild.name}", description=guild_description, color=get_color(0xedda5f, 0xedab5f, 0xbb76f5))
+    embed=discord.Embed(title=f"Informations du serveur\n{guild.name}", description=guild_description, color=get_color(0xedda5f, 0xedab5f, 0xbb76f5))
     embed.add_field(name="Owner", value=guild.owner)
     embed.add_field(name="Serveur ID", value=guild.id)
     embed.add_field(name="Nombre de membres", value=guild.member_count, inline=True)
@@ -1117,7 +1148,7 @@ async def server_info(ctx: discord.ext.commands.context.Context):
 
 @slash.slash(name="config_server", description="Permet de configurer le bot pour le serveur discord")
 @has_permissions(administrator=True)
-@bot_has_permissions(administrator=True)
+@bot_has_permissions(manage_channels=True, send_messages=True, read_messages=True)
 async def config_server(ctx):
     await ctx.defer(hidden=True)
     guild: discord.Guild = ctx.guild
@@ -1159,7 +1190,7 @@ async def config_server(ctx):
         await channel_logs.send(embed=embed)
     except:
         pass
-    
+
 
 @bot.event
 async def on_button_click(interaction: Interaction):
@@ -1448,7 +1479,7 @@ async def help(ctx, command):
         , value="Cette commande permet d'avertir un membre du discord, pour plus de renseignement faites **/help ban_list**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         embed.add_field(name="``/server_info``"
-        , value="Cette commande permet d'obtenir des informations sur le discord, pour plus de renseignement faites **/help server_info **", inline=False)
+        , value="Cette commande permet d'obtenir des informations sur le serveur, pour plus de renseignement faites **/help server_info **", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         embed.add_field(name="``/config_server``"
         , value="Cette commande permet de configurer le bot pour le discord, pour plus de renseignement faites **/help config_server**", inline=False)
@@ -1612,7 +1643,7 @@ async def on_error(event, *args, **kwargs):
 @bot.event
 async def on_slash_command_error(ctx, error: discord.errors):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
+        await ctx.send(embed=discord.Embed(title="Erreur", description="Un argument requis n'a pas  été spécifié", color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
         logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
     elif isinstance(error, discord.errors.HTTPException):
         pass
@@ -1629,13 +1660,16 @@ async def on_slash_command_error(ctx, error: discord.errors):
     elif isinstance(error, commands.errors.CommandInvokeError):
         pass
     elif isinstance(error, commands.errors.UserNotFound):
+        embed=discord.Embed(title="Erreur", description="L'user spécifié est introuvable", color=get_color(0xf54531, 0xf57231, 0xf53145))
+        await ctx.send(embed=embed, hidden=True)
+        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
+    elif isinstance(error, commands.errors.NoPrivateMessage):
         embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
         await ctx.send(embed=embed, hidden=True)
         logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
-    elif isinstance(error, errors.PrivilegedIntentsRequired):
-        embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
-        await ctx.send(embed=embed, hidden=True)
-        logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
+    else:
+        logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
+
 
 @bot.event
 async def on_command_error(ctx, error):

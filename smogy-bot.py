@@ -1091,17 +1091,13 @@ async def sanctions(ctx, user: discord.User):
 @slash.slash(name="user_info", description="Permet d'obtenir des informations à propos d'un membre sur le serveur")
 @has_permissions(manage_roles=True)
 async def user_info(ctx, user: discord.Member):
-    ctx.defer(hidden=True)
+    await ctx.defer(hidden=True)
     guild: discord.Guild = ctx.guild
     embed=discord.Embed(title="User informations", description=f"**Informations** sur {user.mention}", color=get_color(0x42c5f5, 0xf54275, 0x5bfc58))
     embed.add_field(name="Pseudo complet", value=user, inline=True)
     embed.add_field(name="ID", value=user.id, inline=True)
-    embed.add_field(name="Roles sur le serveur", value="```Liste de ses rôles```", inline=False)
-    for role in user.roles:
-        if role.id == ctx.guild.id:
-            pass
-        else:
-            embed.add_field(name=role, value=f"<@&{role.id}>", inline=False)
+    embed.add_field(name="Roles sur le serveur", value=len(user.roles) - 1, inline=False)
+    embed.add_field(name="Role le plus haut", value=user.top_role, inline=False)
     if user.desktop_status is Status.online:
         status = ":green_circle: En ligne"
     elif user.desktop_status is Status.offline:
@@ -1116,7 +1112,7 @@ async def user_info(ctx, user: discord.Member):
             embed.add_field(name="Serveur booster", value="Boost le serveur")
     embed.add_field(name="A rejoint le serveur le", value=user.joined_at)
     embed.set_thumbnail(url=user.avatar_url)
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande : /user_info {user}")
 
 
@@ -1442,6 +1438,10 @@ async def on_button_click(interaction: Interaction):
                     value="server_info"
                 ),
                 create_choice(
+                    name="user_info",
+                    value="user_info"
+                ),
+                create_choice(
                     name="config_server",
                     value="config_server"
                 )
@@ -1483,6 +1483,10 @@ async def help(ctx, command):
         embed.set_footer(text=author, icon_url=author.avatar_url)
         embed.add_field(name="``/config_server``"
         , value="Cette commande permet de configurer le bot pour le discord, pour plus de renseignement faites **/help config_server**", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
+        embed.add_field(name="``/user_info``"
+        , value="Cette commande permet d'obtenir des informations d'un membre sur le serveur, pour plus de renseignement faites **/help config_server**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     elif command == "clear":
@@ -1581,6 +1585,14 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/server_info``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
+    elif command == "user_info":
+        author = ctx.author
+        embed= discord.Embed(title="Commande configuration", description="***/user_info***",
+        color=color)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir des informations à propos d'un membre du serveur", inline=False)
+        embed.add_field(name="Utilisation", value="``/user_info``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
     elif command == "config_server":
         author = ctx.author
         embed= discord.Embed(title="Commande configuration", description="***/config_server***",
@@ -1589,6 +1601,7 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/config_server``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
+    
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
 
 @bot.event
@@ -1613,7 +1626,6 @@ async def on_message(message):
             await message.reply(random.choice(hey_respond_list), delete_after=5)
 
     await bot.process_commands(message)
-
 
 @bot.event
 async def on_error(event, *args, **kwargs):
@@ -1669,7 +1681,6 @@ async def on_slash_command_error(ctx, error: discord.errors):
         logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
     else:
         logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
-
 
 @bot.event
 async def on_command_error(ctx, error):

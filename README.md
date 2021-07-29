@@ -99,6 +99,18 @@ This command allows you to configure the bot for the discord server.
 
 - `/server_config`
 
+### **Server information**
+
+This command allows you to get information about the server.
+
+- `/server_info`
+
+### **User information**
+
+This command allows you to get information about za member of the server.
+
+- `/user_info {member}`
+
 ## **Other things**
 
 The bot also send a message on member join the discord.

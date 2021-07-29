@@ -59,12 +59,12 @@ error_ = """
 
 Neptun_bot = """
 
-███████╗ █████╗ ████████╗██╗   ██╗██████╗ ███╗   ██╗
-██╔════╝██╔══██╗╚══██╔══╝██║   ██║██╔══██╗████╗  ██║
-███████╗███████║   ██║   ██║   ██║██████╔╝██╔██╗ ██║
-╚════██║██╔══██║   ██║   ██║   ██║██╔══██╗██║╚██╗██║
-███████║██║  ██║   ██║   ╚██████╔╝██║  ██║██║ ╚████║
-╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝
+███╗   ██╗███████╗██████╗ ████████╗██╗   ██╗███╗   ██╗
+████╗  ██║██╔════╝██╔══██╗╚══██╔══╝██║   ██║████╗  ██║
+██╔██╗ ██║█████╗  ██████╔╝   ██║   ██║   ██║██╔██╗ ██║
+██║╚██╗██║██╔══╝  ██╔═══╝    ██║   ██║   ██║██║╚██╗██║
+██║ ╚████║███████╗██║        ██║   ╚██████╔╝██║ ╚████║
+╚═╝  ╚═══╝╚══════╝╚═╝        ╚═╝    ╚═════╝ ╚═╝  ╚═══╝
         """
 try:
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
@@ -218,7 +218,7 @@ async def on_member_join(member: discord.Member):
             description=f":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server`` sur votre discord **{guild.name}**", 
             color=get_color(0xf54531, 0xf57231, 0xf53145)))
     embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le serveur **{guild.name}** !", color=color)
-    embed.set_author(name="Smogy BOT", url="https://www.twitch.tv/Smogy", icon_url="https://i.imgur.com/ChQwvkA.png")
+    embed.set_author(name="Neptun", url="https://www.twitch.tv/Smogy", icon_url="https://i.imgur.com/ChQwvkA.png")
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel.send(embed=embed)

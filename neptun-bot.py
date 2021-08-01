@@ -1451,7 +1451,6 @@ async def on_button_click(interaction: Interaction):
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def help(ctx, command):
     await ctx.defer(hidden=True)
-    print("1")
     color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     if command == "all_commands":
         author = ctx.author
@@ -1580,7 +1579,7 @@ async def help(ctx, command):
         await ctx.send(embed=embed, hidden=True)
     elif command == "server_info":
         author = ctx.author
-        embed= discord.Embed(title="Commande configuration", description="***/server_info***",
+        embed= discord.Embed(title="Commande serveur information", description="***/server_info***",
         color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir des informations sur le serveur", inline=False)
         embed.add_field(name="Utilisation", value="``/server_info``", inline=False)
@@ -1588,7 +1587,7 @@ async def help(ctx, command):
         await ctx.send(embed=embed, hidden=True)
     elif command == "user_info":
         author = ctx.author
-        embed= discord.Embed(title="Commande configuration", description="***/user_info***",
+        embed= discord.Embed(title="Commande user informatio,", description="***/user_info***",
         color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir des informations à propos d'un membre du serveur", inline=False)
         embed.add_field(name="Utilisation", value="``/user_info``", inline=False)

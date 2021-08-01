@@ -4,8 +4,8 @@ workspace.code-workspace
 token
 idea
 
-# Configuration file
-config.json
+# Configuration guild
+/guild/
 
 # folder
 /logs/

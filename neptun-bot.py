@@ -46,17 +46,6 @@ ddb = DiscordComponents(bot)
 
 bot.warnings = {} # guild_id : {user_id: [count, [(author_id, raison, preuve)]]}
 
-load_dotenv(dotenv_path="token")
-
-Neptun_bot = """
-
-███╗   ██╗███████╗██████╗ ████████╗██╗   ██╗███╗   ██╗
-████╗  ██║██╔════╝██╔══██╗╚══██╔══╝██║   ██║████╗  ██║
-██╔██╗ ██║█████╗  ██████╔╝   ██║   ██║   ██║██╔██╗ ██║
-██║╚██╗██║██╔══╝  ██╔═══╝    ██║   ██║   ██║██║╚██╗██║
-██║ ╚████║███████╗██║        ██║   ╚██████╔╝██║ ╚████║
-╚═╝  ╚═══╝╚══════╝╚═╝        ╚═╝    ╚═════╝ ╚═╝  ╚═══╝
-        """
 try:
     logging.basicConfig(filename=f"logs/{date}.log", level=logging.INFO, 
         format='%(asctime)s:%(levelname)s:%(message)s')
@@ -66,12 +55,28 @@ except FileNotFoundError:
         format='%(asctime)s:%(levelname)s:%(message)s')
 
 
+load_dotenv(dotenv_path="token")
+
+Neptun_bot = """
+███╗   ██╗███████╗██████╗ ████████╗██╗   ██╗███╗   ██╗
+████╗  ██║██╔════╝██╔══██╗╚══██╔══╝██║   ██║████╗  ██║
+██╔██╗ ██║█████╗  ██████╔╝   ██║   ██║   ██║██╔██╗ ██║
+██║╚██╗██║██╔══╝  ██╔═══╝    ██║   ██║   ██║██║╚██╗██║
+██║ ╚████║███████╗██║        ██║   ╚██████╔╝██║ ╚████║
+╚═╝  ╚═══╝╚══════╝╚═╝        ╚═╝    ╚═════╝ ╚═╝  ╚═══╝
+        """
+
+
 async def check_is_config(guild: discord.Guild):
     channel_logs_is_config = None
     channel_welcome_is_config = None
     invite_link_is_config = None
-    with open(f'{guild.id}/config.json') as infile:
-        data = json.load(infile)
+    try:
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+    except json.decoder.JSONDecodeError:
+        with open(f'guilds/{guild.id}/config.json', "w") as infile:
+            infile.write("{}")
     try:
         data['channel_welcome']
     except:
@@ -96,11 +101,21 @@ async def check_is_config_on_ready(guild: discord.Guild):
     channel_welcome_is_config = None
     invite_link_is_config = None
     try:
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
     except json.decoder.JSONDecodeError:
-        with open(f'{guild.id}/config.json', "w") as infile:
+        with open(f'guilds/{guild.id}/config.json', "w") as infile:
             infile.write("{}")
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+    except FileNotFoundError:
+        try:
+            os.makedirs(f'guilds/{guild.id}')
+            with open(f'guilds/{guild.id}/config.json') as infile:
+                data = json.load(infile)
+        except FileExistsError:
+            pass
+        
     try:
         data['channel_welcome']
         logging.info(f' {guild.id} Channel_welcome is config')
@@ -143,14 +158,14 @@ async def sanctions_files():
         bot.warnings[guild.id] = {}
         
         try:
-            async with aiofiles.open(f"{guild.id}/sanctions/{guild.id}.txt", mode="a") as temp:
+            async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="a") as temp:
                 pass
         except FileNotFoundError:
-            os.makedirs(f"{guild.id}/sanctions")
-            async with aiofiles.open(f"{guild.id}/sanctions/{guild.id}.txt", mode="a") as temp:
+            os.makedirs(f"guilds/{guild.id}/")
+            async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="a") as temp:
                 pass
 
-        async with aiofiles.open(f"{guild.id}/sanctions/{guild.id}.txt", mode="r") as file:
+        async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="r") as file:
             lines = await file.readlines()
 
             for line in lines:
@@ -181,25 +196,30 @@ async def on_ready():
     print(Fore.CYAN + Neptun_bot + Fore.RESET)
     for guild in bot.guilds:
         try:
-            file = open(f"{guild.id}/config.json", "r")
-            content = file.read()
+            with open(f"guilds/{guild.id}/config.json", "r") as file:
+                content = file.read()
         except FileNotFoundError:
             logging.warning(f"Le serveur {guild.id} n'est pas configuré")
             try:
-                file = open(f"{guild.id}/config.json", "a")
-                file.write("{}")
+                file = open(f"guilds/{guild.id}/config.json", "a")
             except FileNotFoundError:
-                os.mkdir(f"{guild.id}")
-                file = open(f"{guild.id}/config.json", "a")
-                file.write("{}")
-
+                os.mkdir(f"guilds/")
+                try:
+                    file = open(f"guilds/{guild.id}/config.json", "a")
+                except FileNotFoundError:
+                    try:
+                        os.makedirs(f"guilds/{guild.id}/")
+                        file = open(f"guilds/{guild.id}/config.json", "a")
+                    except FileExistsError:
+                        pass
+        except json.decoder.JSONDecodeError:
+            file.write("{}")
         await check_is_config_on_ready(guild)
            
         try:
             await sanctions_files()
         except:
             pass
-        await bot.change_presence(activity=discord.Streaming(name="/help", url="https://www.twitch.tv/Smogy"))
 
     logging.info("Bot pret !")
 
@@ -210,7 +230,7 @@ async def on_member_join(member: discord.Member):
     guild: discord.Guild = await bot.fetch_guild(member.guild.id)
     logging.info(f"{member} as join the discord")
     color = get_color(0x00ff4c, 0x00f7ff, 0xeb3495)
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     try:
         channel:TextChannel = await bot.fetch_channel(data['channel_welcome'])
@@ -243,7 +263,7 @@ async def clear(ctx, nombre: int):
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0xfff04f, 0x554fff, 0xff6eff)
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     messages = await ctx.channel.history(limit=nombre).flatten()
@@ -286,7 +306,7 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 1,raison)]]
     async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 1 {raison}\n")
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     embed = discord.Embed(title=f"{user.name} a été **ban** !",
@@ -339,7 +359,7 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     
     async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 3 {reason} Warn\n")
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     
     channel_logs = await bot.fetch_channel(data['channel_logs'])
@@ -363,7 +383,7 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     await ctx.guild.kick(user, reason=reason)
     await channel_logs.send(embed=embed)
     await ctx.send(embed=discord.Embed(description=f"Vous avez kick **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     
@@ -388,7 +408,7 @@ async def unban(ctx, user, *, raison="Aucune raison fournie"):
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x32a852, 0x5eff8a, 0x3fc463)
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     user_base = user
@@ -500,7 +520,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
 
     
     color = get_color(0xd459d9, 0x5973d9, 0xd95959)
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     author = ctx.author
@@ -523,7 +543,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} seconde(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -556,7 +576,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} minute(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -588,7 +608,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} heure(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -620,7 +640,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} jour(s)", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -652,7 +672,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Raison", value=raison, inline=True)
         embed_user.add_field(name="Temps de banissement", value=f"{duration} mois", inline=True)
         embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
@@ -752,7 +772,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
 
     async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 2 {raison}\n")
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     role_mute = await getRoleMute(ctx)
@@ -940,7 +960,7 @@ async def unmute(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     role_mute = await getRoleMute(ctx)
@@ -981,7 +1001,7 @@ async def report(ctx, user: discord.User, raison, *, preuve="Aucune preuve fourn
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     color = get_color(0x34ebe5, 0x2f5da, 0x42f575)
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     embed = discord.Embed(title=f"{ctx.author} a report {user}", color=color)
@@ -1025,7 +1045,7 @@ async def warn(ctx, user: discord.User, raison):
     if await check_is_config(ctx.guild) is False:
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
     color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
@@ -1135,9 +1155,6 @@ async def user_info(ctx, user: discord.Member):
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def server_info(ctx: discord.ext.commands.context.Context):
     await ctx.defer(hidden=True)
-    if await check_is_config(ctx.guild) is False:
-        await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
-        logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     guild: discord.guild=ctx.guild
     if guild.description == None:
         guild_description="Aucune description"
@@ -1170,7 +1187,7 @@ async def config_server(ctx):
     channel = await guild.create_text_channel('configuration-serveur', overwrites=overwrites)
     config_channel = channel.id
     data= {'channel_config': config_channel}
-    with open(f'{guild.id}/config.json', 'w') as outfile:
+    with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
         json.dump(data, outfile, indent=4)
     welcome_config: discord.Message = await channel.send(embed=discord.Embed(
         title="Configuration du bot", 
@@ -1195,7 +1212,7 @@ async def config_server(ctx):
                     description=f"{ctx.author} a commencé la configuration du bot", 
                     color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
     logging.info(f"{ctx.author} a utilisé la commande /config_server {user}")
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     try:
         channel_logs: discord.TextChannel = await bot.fetch_channel(data['channel_logs'])
@@ -1207,7 +1224,7 @@ async def config_server(ctx):
 @bot.event
 async def on_button_click(interaction: Interaction):
     guild = interaction.guild
-    with open(f'{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     message_custom_id = interaction.custom_id 
     configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
@@ -1220,7 +1237,7 @@ async def on_button_click(interaction: Interaction):
             type=7)
         async def get_channel_id(First_time=True):
             try:
-                with open(f'{guild.id}/config.json') as infile:
+                with open(f'guilds/{guild.id}/config.json') as infile:
                     data = json.load(infile)
                 configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
                 if First_time == False:
@@ -1235,7 +1252,7 @@ async def on_button_click(interaction: Interaction):
                 channel = await bot.fetch_channel(message.content)
                 data.update({'channel_welcome': channel.id})
                 
-                with open(f'{guild.id}/config.json', 'w') as outfile:
+                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
                     json.dump(data, outfile, indent=4)
                 await message.delete()
                 try:
@@ -1254,7 +1271,7 @@ async def on_button_click(interaction: Interaction):
                 type=7)
                 discord_invitation = await channel.create_invite(max_uses=0, max_age=0, reason="Configuration du bot")
                 data.update({'invite_link': discord_invitation.url})
-                with open(f'{guild.id}/config.json', 'w') as outfile:
+                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
                     json.dump(data, outfile, indent=4)
                 return channel
             except asyncio.TimeoutError:
@@ -1271,11 +1288,11 @@ async def on_button_click(interaction: Interaction):
             guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
     }
         channel: TextChannel = await guild.create_text_channel('bienvenue', overwrites=overwrites)
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         data.update({'channel_welcome': channel.id})
         
-        with open(f'{guild.id}/config.json', 'w') as outfile:
+        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
         message = await interaction.respond(embed=discord.Embed(
             title="Configuration du bot", 
@@ -1288,12 +1305,12 @@ async def on_button_click(interaction: Interaction):
             type=7)
         discord_invitation = await channel.create_invite(max_uses=0, max_age=0, reason="Configuration du bot")
         data.update({'invite_link': discord_invitation.url})
-        with open(f'{guild.id}/config.json', 'w') as outfile:
+        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
 
     elif message_custom_id == "yes_logs_channel":
         await interaction.message.delete()
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
         message = await configserver_channel.send(embed=discord.Embed(
@@ -1303,7 +1320,7 @@ async def on_button_click(interaction: Interaction):
             components=[],
             type=7)
         async def get_channel_id(First_time: bool):
-            with open(f'{guild.id}/config.json') as infile:
+            with open(f'guilds/{guild.id}/config.json') as infile:
                 data = json.load(infile)
             try:
                 if First_time == False:
@@ -1316,7 +1333,7 @@ async def on_button_click(interaction: Interaction):
                 message: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
                 channel_id = await bot.fetch_channel(message.content)
                 data.update({'channel_logs': channel_id.id})
-                with open(f'{guild.id}/config.json', 'w') as outfile:
+                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
                     json.dump(data, outfile, indent=4)
                     outfile.close()
                 await message.delete()
@@ -1347,7 +1364,7 @@ async def on_button_click(interaction: Interaction):
             await configserver_channel.delete()
         except discord.errors.NotFound:
             pass
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         try:
             await message.delete()
@@ -1371,10 +1388,10 @@ async def on_button_click(interaction: Interaction):
             guild.default_role: discord.PermissionOverwrite(read_messages=False, send_messages=False),
         }
         channel = await guild.create_text_channel('logs', overwrites=overwrites)
-        with open(f'{guild.id}/config.json') as infile:
+        with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         data.update({'channel_logs': channel.id})
-        with open(f'{guild.id}/config.json', 'w') as outfile:
+        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
         embed=discord.Embed(
                     title="Configuration du bot", 
@@ -1657,7 +1674,7 @@ async def on_error(event, *args, **kwargs):
         pass
     elif exc_type is json.decoder.JSONDecodeError:
         data= {}
-        with open(f'{guild.id}/config.json', 'w') as outfile:
+        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
     else:
         print(f
@@ -1735,8 +1752,11 @@ async def on_command_error(ctx, error):
 try:
     bot.run(os.getenv("TOKEN"))
 except discord.errors.PrivilegedIntentsRequired:
-    print(f'You need to enable "presence intents" and "server member intent" in developper portal : https://discord.com/developers/applications/')
-    logging.warning("discord.errors.PrivilegedIntentsRequired")
+    print(f'{Fore.RED}You need to enable "presence intents" and "server member intent" in developper portal : https://discord.com/developers/applications/{Fore.RESET}')
+    logging.warning("Les parametres intents ne sont pas activés")
 except AttributeError:
-    print("Vous n'avez pas encore setup le bot, executez 'setup.py'")
-    logging.warning("AttributeError")
+    print(f"{Fore.RED}Vous n'avez pas encore setup le bot, executez 'setup.py'{Fore.RESET}")
+    logging.warning("Le token n'existe pas")
+except discord.errors.LoginFailure:
+    print(f"{Fore.RED}Le token entré n'est pas un token de bot valide{Fore.RESET}")
+    logging.warning("Le token entré n'est pas un token de bot valide")

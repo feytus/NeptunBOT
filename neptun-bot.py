@@ -203,8 +203,8 @@ async def on_ready():
             try:
                 file = open(f"guilds/{guild.id}/config.json", "a")
             except FileNotFoundError:
-                os.mkdir(f"guilds/")
                 try:
+                    os.mkdir(f"guilds/")
                     file = open(f"guilds/{guild.id}/config.json", "a")
                 except FileNotFoundError:
                     try:
@@ -212,6 +212,8 @@ async def on_ready():
                         file = open(f"guilds/{guild.id}/config.json", "a")
                     except FileExistsError:
                         pass
+                except FileExistsError:
+                    pass
         except json.decoder.JSONDecodeError:
             file.write("{}")
         await check_is_config_on_ready(guild)
@@ -1661,7 +1663,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-"""@bot.event
+@bot.event
 async def on_error(event, *args, **kwargs):
     exc_type, value, traceback = exc_info()
     if exc_type is discord.errors.Forbidden:
@@ -1677,12 +1679,12 @@ async def on_error(event, *args, **kwargs):
         with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
     else:
-        print(f
+        print(f"""
         exc_type: {exc_type}\n
         value: {value}\n
         traceback.tb_frame: {traceback.tb_frame}\n
         args: {args}\n
-        
+        """
         )
         logging.warning(f"{event}, {exc_type}")
 
@@ -1747,7 +1749,7 @@ async def on_command_error(ctx, error):
         embed=discord.Embed(title="Erreur", description=error, color=get_color(0xf54531, 0xf57231, 0xf53145))
         await ctx.send(embed=embed, hidden=True)
         logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
-"""
+
 
 try:
     bot.run(os.getenv("TOKEN"))

@@ -1451,6 +1451,7 @@ async def on_button_click(interaction: Interaction):
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def help(ctx, command):
     await ctx.defer(hidden=True)
+    print("1")
     color = get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     if command == "all_commands":
         author = ctx.author
@@ -1485,9 +1486,8 @@ async def help(ctx, command):
         embed.add_field(name="``/config_server``"
         , value="Cette commande permet de configurer le bot pour le discord, pour plus de renseignement faites **/help config_server**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
-        await ctx.send(embed=embed, hidden=True)
         embed.add_field(name="``/user_info``"
-        , value="Cette commande permet d'obtenir des informations d'un membre sur le serveur, pour plus de renseignement faites **/help config_server**", inline=False)
+        , value="Cette commande permet d'obtenir des informations d'un membre sur le serveur, pour plus de renseignement faites **/help user_info**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     elif command == "clear":

@@ -1,4 +1,8 @@
-# Neptun BOT
+[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
+![GitHub repo size](https://img.shields.io/github/repo-size/feytus/neptunbot?style=for-the-badge&logo=appveyor)
+[![Support Server](https://img.shields.io/discord/809410416685219853.svg?label=Discord&logo=Discord&colorB=7289da&style=for-the-badge)](https://discord.gg/vpEv3HJ)
+
+# Neptun BOT Documentation
 
 Neptun BOT is a **usefull** moderation bot totally made in **python** with the module ``discord_py`` and ``discord_slash``.
 

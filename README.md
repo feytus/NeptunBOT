@@ -1,18 +1,35 @@
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 ![GitHub repo size](https://img.shields.io/github/repo-size/feytus/neptunbot?style=for-the-badge&logo=appveyor)
-[![Support Server](https://img.shields.io/discord/809410416685219853.svg?label=Discord&logo=Discord&colorB=7289da&style=for-the-badge)](https://discord.gg/vpEv3HJ)
+___
+
+# Invite me
+
+[![Invite - me](https://img.shields.io/badge/Invite-me-2295c7?style=for-the-badge&logo=discord&logoColor=white)](discord.com/oauth2/authorize?client_id=811977160067776522&permissions=-214438817&scope=applications.commands%20bot)
+[![Docs](https://img.shields.io/website?down_color=lightgrey&down_message=offline&style=for-the-badge&up_color=green&up_message=documentation&url=https%3A%2F%2Ffeytus.github.io%2F%23neptun)](https://feytus.github.io/#neptun)
+<br>
 
 # Neptun BOT Documentation
 
 Neptun BOT is a **usefull** moderation bot totally made in **python** with the module ``discord_py`` and ``discord_slash``.
 
-## **Setup**
+## **If you want to host the bot by yourself follow the steps :**
 
-To setup the bot you need to execute ``setup.py`` file and enter the token of your bot. Then a server administrator will have to execute the command ``/config_server``.
+1. Installation
+
+```
+git clone https://github.com/feytus/NeptunBOT.git
+```
+
+2. Setup
+
+To setup the bot you need to execute ``setup.py`` file and enter the token of your bot.
+
+3. Configuration
+
+A server administrator will have to execute the command ``/config_server`` on the **discord**.
 
 ## **Normal member commands list**
 
-\
 This is all the commands that you can execute only with the permission to write in a channel. If a command is preceded by a " * " it means that the argument is optional.
 
 ### **Help**

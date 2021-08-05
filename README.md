@@ -26,7 +26,7 @@ To setup the bot you need to execute ``setup.py`` file and enter the token of yo
 
 3. Configuration
 
-A server administrator will have to execute the command ``/config_server`` on the **discord**.
+A server administrator will have to execute the command [/config_server](https://github.com/feytus/NeptunBOT/#server-config) on the **discord**.
 
 ## **Normal member commands list**
 

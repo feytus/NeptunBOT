@@ -118,7 +118,7 @@ async def check_is_config_on_ready(guild: discord.Guild):
         
     try:
         data['channel_welcome']
-        logging.info(f' {guild.id} Channel_welcome is config')
+        logging.info(f'{guild.id} Channel_welcome is config')
         print(f'{Fore.GREEN}{guild.id} ✓ Channel_welcome is config{Fore.RESET}')
         channel_welcome_is_config = True
     except:
@@ -127,7 +127,7 @@ async def check_is_config_on_ready(guild: discord.Guild):
         channel_welcome_is_config = False
     try:
         data['invite_link']
-        logging.info(f' {guild.id} Invite_link is config')
+        logging.info(f'{guild.id} Invite_link is config')
         print(f'{Fore.GREEN}{guild.id} ✓ Invite_link is config{Fore.RESET}')
         invite_link_is_config = True
     except:
@@ -1222,7 +1222,6 @@ async def config_server(ctx):
     except:
         pass
 
-
 @bot.event
 async def on_button_click(interaction: Interaction):
     guild = interaction.guild
@@ -1413,7 +1412,6 @@ async def on_button_click(interaction: Interaction):
         logging.info(f"{interaction.author} a terminé la configuration du bot")
         await asyncio.sleep(10)
         await interaction.channel.delete()
-
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -1623,7 +1621,7 @@ async def help(ctx, command):
         await ctx.send(embed=embed, hidden=True)
     elif command == "user_info":
         author = ctx.author
-        embed= discord.Embed(title="Commande user informatio,", description="***/user_info***",
+        embed= discord.Embed(title="Commande user information", description="***/user_info***",
         color=color)
         embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'obtenir des informations à propos d'un membre du serveur", inline=False)
         embed.add_field(name="Utilisation", value="``/user_info``", inline=False)
@@ -1639,6 +1637,67 @@ async def help(ctx, command):
         await ctx.send(embed=embed, hidden=True)
     
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
+
+
+# BOT EVENT FOR LOGS
+@bot.event
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def on_message_delete(message: discord.Message):
+    guild: discord.Guild=message.guild
+    with open(f'guilds/{guild.id}/config.json') as infile:
+        data = json.load(infile)
+    channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+    if message.author != bot.user:
+        embed=discord.Embed(
+            title="Message supprimé",
+            description=message.content,
+            color=get_color(0xedda5f, 0xedab5f, 0xbb76f5)
+        )
+        embed.add_field(name="Auteur du message", value=message.author)
+        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+        embed.set_thumbnail(url=message.avatar_url)
+        await channel_logs.send(embed=embed)
+        logging.info(f"{message.author} a supprimé le message {message.id}, contenue : '{message.content}'")
+
+
+# BOT EVENT FOR LOGS
+@bot.event
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def on_message_edit(before: discord.Message, after: discord.Message):
+    guild: discord.Guild=before.guild
+    with open(f'guilds/{guild.id}/config.json') as infile:
+        data = json.load(infile)
+    channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+    if before.author != bot.user:
+        embed=discord.Embed(
+            title="Message edité",
+            description=after.content,
+            color=get_color(0xedda5f, 0xedab5f, 0xbb76f5)
+        )
+        embed.add_field(name="Auteur du message", value=before.author)
+        embed.add_field(name="Ancien message", value=before.content)
+        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+        embed.set_thumbnail(url=after.avatar_url)
+        await channel_logs.send(embed=embed)
+        logging.info(f"{before.author} a edité le message {before.id}, avant : '{before.content}', après : '{after.content}'")
+
+# BOT EVENT FOR LOGS
+@bot.event
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def on_guild_channel_create(channel: discord.abc.GuildChannel):
+    guild: discord.Guild=channel.guild
+    with open(f'guilds/{guild.id}/config.json') as infile:
+        data = json.load(infile)
+    channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+    embed=discord.Embed(
+        title="Un channel a été crée",
+        color=get_color(0xedda5f, 0xedab5f, 0xbb76f5)
+    )
+    embed.add_field(name="Nom du channel", value=channel)
+    embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+    await channel_logs.send(embed=embed)
+    logging.info(f"Le salon '{channel}' a été crée")
+
 
 @bot.event
 @bot_has_permissions(send_messages=True, read_messages=True)
@@ -1662,6 +1721,7 @@ async def on_message(message):
             await message.reply(random.choice(hey_respond_list), delete_after=5)
 
     await bot.process_commands(message)
+
 
 @bot.event
 async def on_error(event, *args, **kwargs):
@@ -1687,6 +1747,7 @@ async def on_error(event, *args, **kwargs):
         """
         )
         logging.warning(f"{event}, {exc_type}")
+
 
 @bot.event
 async def on_slash_command_error(ctx, error: discord.errors):

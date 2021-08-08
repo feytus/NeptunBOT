@@ -243,7 +243,7 @@ async def on_member_join(member: discord.Member):
             description=f":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server`` sur votre discord **{guild.name}**", 
             color=get_color(0xf54531, 0xf57231, 0xf53145)))
     embed=discord.Embed(title="Bienvenue", description=f"{member.mention}, bienvenue sur le serveur **{guild.name}** !", color=color)
-    embed.set_author(name="Neptun", url="https://www.twitch.tv/Smogy", icon_url="https://i.imgur.com/ChQwvkA.png")
+    embed.set_author(name="Neptun", icon_url=bot.user.avatar_url)
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
     await channel.send(embed=embed)
@@ -1314,13 +1314,14 @@ async def on_button_click(interaction: Interaction):
         with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
-        message = await configserver_channel.send(embed=discord.Embed(
-            title="Configuration du bot",
-            description="Entrez l'**id** du channel de logs", 
-                color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
-            components=[],
-            type=7)
+        
         async def get_channel_id(First_time: bool):
+            message: discord.Message = await configserver_channel.send(embed=discord.Embed(
+                title="Configuration du bot",
+                description="Entrez l'**id** du channel de logs", 
+                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
+                components=[],
+                type=7)
             with open(f'guilds/{guild.id}/config.json') as infile:
                 data = json.load(infile)
             try:
@@ -1331,15 +1332,21 @@ async def on_button_click(interaction: Interaction):
                             color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e),
                         components=[])
                     message_embed=await configserver_channel.send(embed=embed)
-                message: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
-                channel_id = await bot.fetch_channel(message.content)
+                message_user: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
+                channel_id = await bot.fetch_channel(message_user.content)
                 data.update({'channel_logs': channel_id.id})
                 with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
                     json.dump(data, outfile, indent=4)
                     outfile.close()
-                await message.delete()
+                try:
+                    await message_user.delete()
+                except:
+                    pass
                 try:
                     await message_embed.delete()
+                except:
+                    pass
+                try:
                     await message.delete()
                 except:
                     pass
@@ -1367,10 +1374,6 @@ async def on_button_click(interaction: Interaction):
             pass
         with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
-        try:
-            await message.delete()
-        except:
-            pass
         embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", 
                     color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
         embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
@@ -1643,11 +1646,14 @@ async def help(ctx, command):
 @bot.event
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def on_message_delete(message: discord.Message):
-    guild: discord.Guild=message.guild
-    with open(f'guilds/{guild.id}/config.json') as infile:
-        data = json.load(infile)
-    channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
     if message.author != bot.user:
+        guild: discord.Guild=message.guild
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+        try:
+            channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+        except KeyError:
+            pass
         embed=discord.Embed(
             title="Message supprimé",
             description=message.content,
@@ -1655,8 +1661,11 @@ async def on_message_delete(message: discord.Message):
         )
         embed.add_field(name="Auteur du message", value=message.author)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed.set_thumbnail(url=message.avatar_url)
-        await channel_logs.send(embed=embed)
+        embed.set_thumbnail(url=message.author.avatar_url)
+        try:
+            await channel_logs.send(embed=embed)
+        except UnboundLocalError:
+            pass
         logging.info(f"{message.author} a supprimé le message {message.id}, contenue : '{message.content}'")
 
 
@@ -1664,11 +1673,14 @@ async def on_message_delete(message: discord.Message):
 @bot.event
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def on_message_edit(before: discord.Message, after: discord.Message):
-    guild: discord.Guild=before.guild
-    with open(f'guilds/{guild.id}/config.json') as infile:
-        data = json.load(infile)
-    channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
     if before.author != bot.user:
+        guild: discord.Guild=before.guild
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+        try:
+            channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+        except KeyError:
+            pass
         embed=discord.Embed(
             title="Message edité",
             description=after.content,
@@ -1677,26 +1689,83 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
         embed.add_field(name="Auteur du message", value=before.author)
         embed.add_field(name="Ancien message", value=before.content)
         embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed.set_thumbnail(url=after.avatar_url)
-        await channel_logs.send(embed=embed)
+        embed.set_thumbnail(url=after.author.avatar_url)
+        try:
+            await channel_logs.send(embed=embed)
+        except UnboundLocalError:
+            pass
         logging.info(f"{before.author} a edité le message {before.id}, avant : '{before.content}', après : '{after.content}'")
+
 
 # BOT EVENT FOR LOGS
 @bot.event
 @bot_has_permissions(send_messages=True, read_messages=True)
-async def on_guild_channel_create(channel: discord.abc.GuildChannel):
+async def on_guild_channel_create(channel):
     guild: discord.Guild=channel.guild
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
-    channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+    try:
+        channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+    except KeyError:
+        pass
     embed=discord.Embed(
-        title="Un channel a été crée",
+        title="Un channel a été créé",
         color=get_color(0xedda5f, 0xedab5f, 0xbb76f5)
     )
     embed.add_field(name="Nom du channel", value=channel)
     embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-    await channel_logs.send(embed=embed)
-    logging.info(f"Le salon '{channel}' a été crée")
+    try:
+        await channel_logs.send(embed=embed)
+    except UnboundLocalError:
+        pass
+    logging.info(f"Le salon '{channel}' a été créé")
+
+
+# BOT EVENT FOR LOGS
+@bot.event
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def on_guild_channel_delete(channel):
+    guild: discord.Guild=channel.guild
+    with open(f'guilds/{guild.id}/config.json') as infile:
+        data = json.load(infile)
+    try:
+        channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+    except KeyError:
+        pass
+    embed=discord.Embed(
+        title="Un channel a été supprimé",
+        color=get_color(0xedda5f, 0xedab5f, 0xbb76f5)
+    )
+    embed.add_field(name="Nom du channel", value=channel)
+    embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+    try:
+        await channel_logs.send(embed=embed)
+    except UnboundLocalError:
+        pass
+    logging.info(f"Le salon '{channel}' a été supprimé")
+
+
+# BOT EVENT FOR LOGS
+@bot.event
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def on_user_update(before: discord.User, after: discord.User):
+    for guild in before.mutual_guilds:
+        guild: discord.Guild=guild
+        print(guild)
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+        channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+    embed=discord.Embed(
+        title=f"{before} a changé son profil",
+        color=get_color(0xedda5f, 0xedab5f, 0xbb76f5)
+    )
+    embed.set_thumbnail(url=after.avatar_url)
+    embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+    try:
+        await channel_logs.send(embed=embed)
+    except UnboundLocalError:
+        pass
+    logging.info(f"Le salon '{channel}' a été supprimé")
 
 
 @bot.event
@@ -1723,7 +1792,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-@bot.event
+'''@bot.event
 async def on_error(event, *args, **kwargs):
     exc_type, value, traceback = exc_info()
     if exc_type is discord.errors.Forbidden:
@@ -1746,7 +1815,7 @@ async def on_error(event, *args, **kwargs):
         args: {args}\n
         """
         )
-        logging.warning(f"{event}, {exc_type}")
+        logging.warning(f"{event}, {exc_type}")'''
 
 
 @bot.event

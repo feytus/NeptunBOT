@@ -115,6 +115,9 @@ async def check_is_config_on_ready(guild: discord.Guild):
                 data = json.load(infile)
         except FileExistsError:
             pass
+        except FileNotFoundError:
+            with open(f'guilds/{guild.id}/config.json', 'a') as infile:
+                infile.write('{}')
         
     try:
         data['channel_welcome']
@@ -195,6 +198,8 @@ def get_color(color1, color2, color3):
 async def on_ready():
     print(Fore.CYAN + Neptun_bot + Fore.RESET)
     for guild in bot.guilds:
+        print()
+        print(Fore.CYAN + 'The bot is on the server : ' + guild.name + Fore.RESET)
         try:
             with open(f"guilds/{guild.id}/config.json", "r") as file:
                 content = file.read()
@@ -270,6 +275,7 @@ async def clear(ctx, *, nombre: int=None):
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     if nombre == None:
        await ctx.channel.purge(limit=1000000)
+       nombre="Tout"
     else:
        await ctx.channel.purge(limit=nombre)
     embed = discord.Embed(title=f"Le channel {ctx.channel} a été clear !", color=color)
@@ -1755,7 +1761,10 @@ async def on_user_update(before: discord.User, after: discord.User):
         print(guild)
         with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
-        channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+        try:
+            channel_logs: discord.TextChannel = bot.get_channel(data['channel_logs'])
+        except:
+            pass
     embed=discord.Embed(
         title=f"{before} a changé son profil",
         color=get_color(0xedda5f, 0xedab5f, 0xbb76f5)
@@ -1765,6 +1774,8 @@ async def on_user_update(before: discord.User, after: discord.User):
     try:
         await channel_logs.send(embed=embed)
     except UnboundLocalError:
+        pass
+    except:
         pass
     logging.info(f"Le salon '{channel}' a été supprimé")
 

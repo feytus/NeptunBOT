@@ -1758,7 +1758,6 @@ async def on_guild_channel_delete(channel):
 async def on_user_update(before: discord.User, after: discord.User):
     for guild in before.mutual_guilds:
         guild: discord.Guild=guild
-        print(guild)
         with open(f'guilds/{guild.id}/config.json') as infile:
             data = json.load(infile)
         try:
@@ -1777,7 +1776,7 @@ async def on_user_update(before: discord.User, after: discord.User):
         pass
     except:
         pass
-    logging.info(f"Le salon '{channel}' a été supprimé")
+    logging.info(f"{after} a update son profile")
 
 
 @bot.event

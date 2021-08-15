@@ -38,4 +38,4 @@ setup_finish = """
 
 print(Fade.Vertical(Colors.red_to_blue, setup_finish))
 
-input("Appuyez sur une ENTER pour quitter le setup ")
+input("Appuyez sur ENTER pour quitter le setup ")

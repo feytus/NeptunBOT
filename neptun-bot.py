@@ -33,7 +33,7 @@ default_intents = discord.Intents.default()
 
 all_intents: discord.Intents = discord.Intents.all()
 
-bot = commands.Bot(command_prefix="/", intents=all_intents)
+bot = commands.Bot(command_prefix="!", intents=all_intents)
 bot.remove_command("help")
 slash = SlashCommand(bot, sync_commands=True)
 
@@ -254,11 +254,11 @@ async def on_member_join(member: discord.Member):
                     name="nombre",
                     description="Indiquer le nombre de message à clear",
                     option_type=4,
-                    required=True),
+                    required=False),
              ])
 @has_permissions(manage_messages=True)
 @bot_has_permissions(send_messages=True, read_messages=True, manage_messages=True)
-async def clear(ctx, nombre: int):
+async def clear(ctx, *, nombre: int=None):
     await ctx.defer(hidden=True)
     guild: discord.Guild=ctx.guild
     if await check_is_config(guild=ctx.guild) is False:
@@ -268,9 +268,10 @@ async def clear(ctx, nombre: int):
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
-    messages = await ctx.channel.history(limit=nombre).flatten()
-    for message in messages:
-        await message.delete()
+    if nombre == None:
+       await ctx.channel.purge(limit=1000000)
+    else:
+       await ctx.channel.purge(limit=nombre)
     embed = discord.Embed(title=f"Le channel {ctx.channel} a été clear !", color=color)
     embed.set_thumbnail(url=ctx.author.avatar_url)
     embed.add_field(name="Modérateur", value=ctx.author.mention, inline=True)

@@ -53,7 +53,7 @@ This command allows you to get information about the discord.
 
 This command allows you to delete a certain number of messages.
 
-- `/clear {amount}`
+- `/clear {*amount}`
 
 ### **Tempmute**
 

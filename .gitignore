@@ -4,6 +4,9 @@ workspace.code-workspace
 token
 idea
 
+# blacklist
+blacklist
+
 # Configuration guild
 /guilds/
 

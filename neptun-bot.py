@@ -10,6 +10,7 @@ import aiofiles
 from sys import exc_info
 import json
 from colorama import Fore, Back, Style
+from discord.ext.commands.errors import UserNotFound
 
 from discord.utils import get
 import discord
@@ -33,7 +34,7 @@ default_intents = discord.Intents.default()
 
 all_intents: discord.Intents = discord.Intents.all()
 
-bot = commands.Bot(command_prefix="!", intents=all_intents)
+bot = commands.Bot(command_prefix="/", intents=all_intents)
 bot.remove_command("help")
 slash = SlashCommand(bot, sync_commands=True)
 
@@ -156,6 +157,20 @@ async def check_is_config_on_ready(guild: discord.Guild):
         return True
     
 
+async def check_user_is_blacklisted(user: discord.User):
+    async with aiofiles.open('blacklist', 'r') as file:
+        lines = await file.readlines()
+        for line in lines:
+            user_line, reason_line = line.split(",")
+            user_line: int = int(user_line)
+            user: int = int(user.id)
+            if line == user:
+                return True
+            else:
+                pass
+        await file.close()
+
+
 async def sanctions_files():
     for guild in bot.guilds:
         bot.warnings[guild.id] = {}
@@ -235,7 +250,10 @@ async def on_ready():
 @bot_has_permissions(send_messages=True, read_messages=True, view_channel=True)
 async def on_member_join(member: discord.Member):
     guild: discord.Guild = await bot.fetch_guild(member.guild.id)
-    logging.info(f"{member} as join the discord")
+    if check_user_is_blacklisted(member) is True:
+        await guild.ban(member, reason="User is blacklisted")
+        return
+    logging.info(f"{member} a rejoint le discord :" + guild.name)
     color = get_color(0x00ff4c, 0x00f7ff, 0xeb3495)
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
@@ -1229,199 +1247,50 @@ async def config_server(ctx):
     except:
         pass
 
-@bot.event
-async def on_button_click(interaction: Interaction):
-    guild = interaction.guild
+
+@slash.slash(name="blacklist_add", description="Permet d'ajouter un membre à la blacklist publique", options=[
+                create_option(
+                    name="user",
+                    description="Entrez l'user qui doit être ajouté à la blacklist",
+                    option_type=6,
+                    required=True),
+                create_option(
+                    name="raison",
+                    description="Entrez la raison",
+                    option_type=3,
+                    required=True)])
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def blacklist_add(ctx, user: discord.User, raison):
+    feytus: discord.User = bot.fetch_user(330707764911276035)
+    if ctx.author == feytus:
+        pass
+    else:
+        await ctx.send(embed=discord.Embed(title="Erreur", 
+            description=f":warning: seul {feytus} peut ajouter des gens à la blacklist", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        return
+    await ctx.defer(hidden=True)
+    guild: discord.Guild=ctx.guild
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
-    message_custom_id = interaction.custom_id 
-    configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
-    if message_custom_id== "yes_welcome_channel":
-        await interaction.respond(embed=discord.Embed(
-            title="Configuration du bot", 
-            description="Entrez l'**id** du channel de bienvenue", 
-                color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
-            components=[],
-            type=7)
-        async def get_channel_id(First_time=True):
-            try:
-                with open(f'guilds/{guild.id}/config.json') as infile:
-                    data = json.load(infile)
-                configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
-                if First_time == False:
-                    embed=discord.Embed(
-                        title="Configuration du bot", 
-                        description="Entrez l'**id** du channel de bienvenue", 
-                            color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e),
-                        components=[])
-                    message_embed=await configserver_channel.send(embed=embed)
-                message: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
-                
-                channel = await bot.fetch_channel(message.content)
-                data.update({'channel_welcome': channel.id})
-                
-                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
-                    json.dump(data, outfile, indent=4)
-                await message.delete()
-                try:
-                    await message_embed.delete()
-                except:
-                    pass
-                await interaction.message.delete()
-                await message.channel.send(embed=discord.Embed(
-                title="Configuration du bot", 
-                description="Il y a t-il un channel de **logs** ?", 
-                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
-                    components=[[
-                Button(style=ButtonStyle.green, label="Oui", custom_id="yes_logs_channel"), 
-                Button(style=ButtonStyle.red, label="Non", custom_id="no_logs_channel")
-                ]],
-                type=7)
-                discord_invitation = await channel.create_invite(max_uses=0, max_age=0, reason="Configuration du bot")
-                data.update({'invite_link': discord_invitation.url})
-                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
-                    json.dump(data, outfile, indent=4)
-                return channel
-            except asyncio.TimeoutError:
-                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Vous n'avez pas repondu à la question", color=get_color(0xf54531, 0xf57231, 0xf53145)))
-            except discord.errors.HTTPException:
-                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Aucun channel ne correspond à l'id : **{message.content}**", color=get_color(0xf54531, 0xf57231, 0xf53145)))
-                await get_channel_id(First_time=False)
+    if await check_user_is_blacklisted(user) is True:
+        await ctx.send(embed=discord.Embed(title="Erreur", 
+        description=f":warning: {user} est déjà blacklisté", 
+        color=get_color(0xf54531, 0xf57231, 0xf53145)))
+    else:
+        async with aiofiles.open('blacklist', 'a') as file:
+            await file.write(f"{user.id}, {raison}\r")
+            await file.close()
+            await ctx.send(embed=discord.Embed(title="Blacklist", 
+            description=f"**{user}** a été ajouté à la blacklist :white_check_mark:", 
+            color=0x34eb37))
+            embed_logs = discord.Embed(title="Blacklist", description="Un utilisateur a été ajouté à la blacklist")
+            embed_logs.add_field(name="User", value=user)
+            embed_logs.add_field(name="Modérateur", value=ctx.author)
+            embed_logs.add_field(name="Raison", value=raison)
+            channel_logs = await bot.fetch_channel(data['channel_logs'])
+            await channel_logs.send(embed=embed_logs)
 
-        await get_channel_id(First_time=True)
-        
-    elif message_custom_id== "no_welcome_channel":
-        guild: discord.Guild = interaction.guild
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
-    }
-        channel: TextChannel = await guild.create_text_channel('bienvenue', overwrites=overwrites)
-        with open(f'guilds/{guild.id}/config.json') as infile:
-            data = json.load(infile)
-        data.update({'channel_welcome': channel.id})
-        
-        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
-            json.dump(data, outfile, indent=4)
-        message = await interaction.respond(embed=discord.Embed(
-            title="Configuration du bot", 
-            description="Channel **crée**, Il y a t-il un channel de **logs** ?", 
-                color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
-                components=[[
-            Button(style=ButtonStyle.green, label="Oui", custom_id="yes_logs_channel"), 
-            Button(style=ButtonStyle.red, label="Non", custom_id="no_logs_channel")
-            ]],
-            type=7)
-        discord_invitation = await channel.create_invite(max_uses=0, max_age=0, reason="Configuration du bot")
-        data.update({'invite_link': discord_invitation.url})
-        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
-            json.dump(data, outfile, indent=4)
-
-    elif message_custom_id == "yes_logs_channel":
-        await interaction.message.delete()
-        with open(f'guilds/{guild.id}/config.json') as infile:
-            data = json.load(infile)
-        configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
-        
-        async def get_channel_id(First_time: bool):
-            message: discord.Message = await configserver_channel.send(embed=discord.Embed(
-                title="Configuration du bot",
-                description="Entrez l'**id** du channel de logs", 
-                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
-                components=[],
-                type=7)
-            with open(f'guilds/{guild.id}/config.json') as infile:
-                data = json.load(infile)
-            try:
-                if First_time == False:
-                    embed=discord.Embed(
-                        title="Configuration du bot", 
-                        description="Entrez l'**id** du channel de logs", 
-                            color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e),
-                        components=[])
-                    message_embed=await configserver_channel.send(embed=embed)
-                message_user: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
-                channel_id = await bot.fetch_channel(message_user.content)
-                data.update({'channel_logs': channel_id.id})
-                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
-                    json.dump(data, outfile, indent=4)
-                    outfile.close()
-                try:
-                    await message_user.delete()
-                except:
-                    pass
-                try:
-                    await message_embed.delete()
-                except:
-                    pass
-                try:
-                    await message.delete()
-                except:
-                    pass
-                embed=discord.Embed(
-                    title="Configuration du bot", 
-                    description="Terminée :white_check_mark:", 
-                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
-                embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
-                embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
-                embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-                await message.channel.send(embed=embed)
-                return channel_id
-            except asyncio.TimeoutError:
-                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Vous n'avez pas repondu à la question", color=get_color(0xf54531, 0xf57231, 0xf53145)))
-                await asyncio.sleep(10)
-                await interaction.channel.delete()
-            except discord.errors.HTTPException:
-                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Aucun channel ne correspond à l'id : **{message.content}**", color=get_color(0xf54531, 0xf57231, 0xf53145)))
-                await get_channel_id(First_time=False)
-        await get_channel_id(First_time=True)
-        await asyncio.sleep(10)
-        try:
-            await configserver_channel.delete()
-        except discord.errors.NotFound:
-            pass
-        with open(f'guilds/{guild.id}/config.json') as infile:
-            data = json.load(infile)
-        embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", 
-                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
-        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
-        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
-        embed.add_field(name="Administateur", value=interaction.author.mention, inline=False)
-        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed.set_thumbnail(url=interaction.author.avatar_url)
-        channel_logs = await bot.fetch_channel(data['channel_logs'])
-        await channel_logs.send(embed=embed)
-        logging.info(f"{interaction.author} a terminé la configuration du bot")
-
-    elif message_custom_id== "no_logs_channel":
-        await interaction.message.delete()
-        guild: discord.Guild = interaction.guild
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=False, send_messages=False),
-        }
-        channel = await guild.create_text_channel('logs', overwrites=overwrites)
-        with open(f'guilds/{guild.id}/config.json') as infile:
-            data = json.load(infile)
-        data.update({'channel_logs': channel.id})
-        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
-            json.dump(data, outfile, indent=4)
-        embed=discord.Embed(
-                    title="Configuration du bot", 
-                    description="Terminée :white_check_mark:", 
-                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
-        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
-        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
-        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await interaction.respond(embed=embed)
-        embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
-        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
-        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
-        embed.add_field(name="Administateur", value=interaction.author.mention, inline=False)
-        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
-        embed.set_thumbnail(url=interaction.author.avatar_url)
-        await channel.send(embed=embed)
-        logging.info(f"{interaction.author} a terminé la configuration du bot")
-        await asyncio.sleep(10)
-        await interaction.channel.delete()
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -1648,6 +1517,199 @@ async def help(ctx, command):
     
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
 
+@bot.event
+async def on_button_click(interaction: Interaction):
+    guild = interaction.guild
+    with open(f'guilds/{guild.id}/config.json') as infile:
+        data = json.load(infile)
+    message_custom_id = interaction.custom_id 
+    configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
+    if message_custom_id== "yes_welcome_channel":
+        await interaction.respond(embed=discord.Embed(
+            title="Configuration du bot", 
+            description="Entrez l'**id** du channel de bienvenue", 
+                color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
+            components=[],
+            type=7)
+        async def get_channel_id(First_time=True):
+            try:
+                with open(f'guilds/{guild.id}/config.json') as infile:
+                    data = json.load(infile)
+                configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
+                if First_time == False:
+                    embed=discord.Embed(
+                        title="Configuration du bot", 
+                        description="Entrez l'**id** du channel de bienvenue", 
+                            color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e),
+                        components=[])
+                    message_embed=await configserver_channel.send(embed=embed)
+                message: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
+                
+                channel = await bot.fetch_channel(message.content)
+                data.update({'channel_welcome': channel.id})
+                
+                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
+                    json.dump(data, outfile, indent=4)
+                await message.delete()
+                try:
+                    await message_embed.delete()
+                except:
+                    pass
+                await interaction.message.delete()
+                await message.channel.send(embed=discord.Embed(
+                title="Configuration du bot", 
+                description="Il y a t-il un channel de **logs** ?", 
+                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
+                    components=[[
+                Button(style=ButtonStyle.green, label="Oui", custom_id="yes_logs_channel"), 
+                Button(style=ButtonStyle.red, label="Non", custom_id="no_logs_channel")
+                ]],
+                type=7)
+                discord_invitation = await channel.create_invite(max_uses=0, max_age=0, reason="Configuration du bot")
+                data.update({'invite_link': discord_invitation.url})
+                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
+                    json.dump(data, outfile, indent=4)
+                return channel
+            except asyncio.TimeoutError:
+                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Vous n'avez pas repondu à la question", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+            except discord.errors.HTTPException:
+                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Aucun channel ne correspond à l'id : **{message.content}**", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+                await get_channel_id(First_time=False)
+
+        await get_channel_id(First_time=True)
+        
+    elif message_custom_id== "no_welcome_channel":
+        guild: discord.Guild = interaction.guild
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=False),
+    }
+        channel: TextChannel = await guild.create_text_channel('bienvenue', overwrites=overwrites)
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+        data.update({'channel_welcome': channel.id})
+        
+        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
+            json.dump(data, outfile, indent=4)
+        message = await interaction.respond(embed=discord.Embed(
+            title="Configuration du bot", 
+            description="Channel **crée**, Il y a t-il un channel de **logs** ?", 
+                color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)), 
+                components=[[
+            Button(style=ButtonStyle.green, label="Oui", custom_id="yes_logs_channel"), 
+            Button(style=ButtonStyle.red, label="Non", custom_id="no_logs_channel")
+            ]],
+            type=7)
+        discord_invitation = await channel.create_invite(max_uses=0, max_age=0, reason="Configuration du bot")
+        data.update({'invite_link': discord_invitation.url})
+        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
+            json.dump(data, outfile, indent=4)
+
+    elif message_custom_id == "yes_logs_channel":
+        await interaction.message.delete()
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+        configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
+        
+        async def get_channel_id(First_time: bool):
+            message: discord.Message = await configserver_channel.send(embed=discord.Embed(
+                title="Configuration du bot",
+                description="Entrez l'**id** du channel de logs", 
+                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e)),
+                components=[],
+                type=7)
+            with open(f'guilds/{guild.id}/config.json') as infile:
+                data = json.load(infile)
+            try:
+                if First_time == False:
+                    embed=discord.Embed(
+                        title="Configuration du bot", 
+                        description="Entrez l'**id** du channel de logs", 
+                            color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e),
+                        components=[])
+                    message_embed=await configserver_channel.send(embed=embed)
+                message_user: discord.Message = await bot.wait_for("message", check=lambda m: m.author == interaction.author and m.channel == interaction.channel, timeout=30)
+                channel_id = await bot.fetch_channel(message_user.content)
+                data.update({'channel_logs': channel_id.id})
+                with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
+                    json.dump(data, outfile, indent=4)
+                    outfile.close()
+                try:
+                    await message_user.delete()
+                except:
+                    pass
+                try:
+                    await message_embed.delete()
+                except:
+                    pass
+                try:
+                    await message.delete()
+                except:
+                    pass
+                embed=discord.Embed(
+                    title="Configuration du bot", 
+                    description="Terminée :white_check_mark:", 
+                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
+                embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
+                embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
+                embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+                await message.channel.send(embed=embed)
+                return channel_id
+            except asyncio.TimeoutError:
+                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Vous n'avez pas repondu à la question", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+                await asyncio.sleep(10)
+                await interaction.channel.delete()
+            except discord.errors.HTTPException:
+                await configserver_channel.send(embed=discord.Embed(title="Erreur", description=f"Aucun channel ne correspond à l'id : **{message.content}**", color=get_color(0xf54531, 0xf57231, 0xf53145)))
+                await get_channel_id(First_time=False)
+        await get_channel_id(First_time=True)
+        await asyncio.sleep(10)
+        try:
+            await configserver_channel.delete()
+        except discord.errors.NotFound:
+            pass
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+        embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", 
+                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
+        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
+        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
+        embed.add_field(name="Administateur", value=interaction.author.mention, inline=False)
+        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+        embed.set_thumbnail(url=interaction.author.avatar_url)
+        channel_logs = await bot.fetch_channel(data['channel_logs'])
+        await channel_logs.send(embed=embed)
+        logging.info(f"{interaction.author} a terminé la configuration du bot")
+
+    elif message_custom_id== "no_logs_channel":
+        await interaction.message.delete()
+        guild: discord.Guild = interaction.guild
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False, send_messages=False),
+        }
+        channel = await guild.create_text_channel('logs', overwrites=overwrites)
+        with open(f'guilds/{guild.id}/config.json') as infile:
+            data = json.load(infile)
+        data.update({'channel_logs': channel.id})
+        with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
+            json.dump(data, outfile, indent=4)
+        embed=discord.Embed(
+                    title="Configuration du bot", 
+                    description="Terminée :white_check_mark:", 
+                    color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
+        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
+        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
+        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+        await interaction.respond(embed=embed)
+        embed=discord.Embed(title=f"{interaction.author} a terminé la configuration du bot", color=get_color(0x3ef76f, 0xe8f73e, 0xf73e3e))
+        embed.add_field(name="Channel de bienvenue", value=f"<#{data['channel_welcome']}>", inline=False)
+        embed.add_field(name="Channel de logs", value=f"<#{data['channel_logs']}>", inline=False)
+        embed.add_field(name="Administateur", value=interaction.author.mention, inline=False)
+        embed.set_footer(text=f"Date • {datetime.datetime.now()}")
+        embed.set_thumbnail(url=interaction.author.avatar_url)
+        await channel.send(embed=embed)
+        logging.info(f"{interaction.author} a terminé la configuration du bot")
+        await asyncio.sleep(10)
+        await interaction.channel.delete()
 
 # BOT EVENT FOR LOGS
 @bot.event
@@ -1803,7 +1865,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-'''@bot.event
+@bot.event
 async def on_error(event, *args, **kwargs):
     exc_type, value, traceback = exc_info()
     if exc_type is discord.errors.Forbidden:
@@ -1826,7 +1888,7 @@ async def on_error(event, *args, **kwargs):
         args: {args}\n
         """
         )
-        logging.warning(f"{event}, {exc_type}")'''
+        logging.warning(f"{event}, {exc_type}")
 
 
 @bot.event

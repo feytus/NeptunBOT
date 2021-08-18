@@ -170,7 +170,6 @@ async def check_user_is_blacklisted(user: discord.User):
                 pass
         await file.close()
 
-
 async def sanctions_files():
     for guild in bot.guilds:
         bot.warnings[guild.id] = {}
@@ -250,7 +249,7 @@ async def on_ready():
 @bot_has_permissions(send_messages=True, read_messages=True, view_channel=True)
 async def on_member_join(member: discord.Member):
     guild: discord.Guild = await bot.fetch_guild(member.guild.id)
-    if check_user_is_blacklisted(member) is True:
+    if await check_user_is_blacklisted(member) is True:
         await guild.ban(member, reason="User is blacklisted")
         return
     logging.info(f"{member} a rejoint le discord :" + guild.name)
@@ -1261,29 +1260,30 @@ async def config_server(ctx):
                     required=True)])
 @bot_has_permissions(send_messages=True, read_messages=True)
 async def blacklist_add(ctx, user: discord.User, raison):
-    feytus: discord.User = bot.fetch_user(330707764911276035)
+    await ctx.defer(hidden=True)
+    feytus: discord.User = await bot.fetch_user(330707764911276035)
     if ctx.author == feytus:
         pass
     else:
         await ctx.send(embed=discord.Embed(title="Erreur", 
             description=f":warning: seul {feytus} peut ajouter des gens à la blacklist", 
-            color=get_color(0xf54531, 0xf57231, 0xf53145)))
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
         return
-    await ctx.defer(hidden=True)
+    
     guild: discord.Guild=ctx.guild
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     if await check_user_is_blacklisted(user) is True:
         await ctx.send(embed=discord.Embed(title="Erreur", 
         description=f":warning: {user} est déjà blacklisté", 
-        color=get_color(0xf54531, 0xf57231, 0xf53145)))
+        color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
     else:
         async with aiofiles.open('blacklist', 'a') as file:
             await file.write(f"{user.id}, {raison}\r")
             await file.close()
             await ctx.send(embed=discord.Embed(title="Blacklist", 
             description=f"**{user}** a été ajouté à la blacklist :white_check_mark:", 
-            color=0x34eb37))
+            color=0x34eb37), hidden=True)
             embed_logs = discord.Embed(title="Blacklist", description="Un utilisateur a été ajouté à la blacklist")
             embed_logs.add_field(name="User", value=user)
             embed_logs.add_field(name="Modérateur", value=ctx.author)

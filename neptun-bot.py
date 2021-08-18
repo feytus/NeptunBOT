@@ -1357,6 +1357,10 @@ async def blacklist_add(ctx, user: discord.User, raison):
                 create_choice(
                     name="config_server",
                     value="config_server"
+                ),
+                create_choice(
+                    name="blacklist_add",
+                    value="blacklist_add"
                 )
                 ]),
              ])
@@ -1400,6 +1404,9 @@ async def help(ctx, command):
         embed.set_footer(text=author, icon_url=author.avatar_url)
         embed.add_field(name="``/user_info``"
         , value="Cette commande permet d'obtenir des informations d'un membre sur le serveur, pour plus de renseignement faites **/help user_info**", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        embed.add_field(name="``/blacklist_add``"
+        , value="Cette commande permet des membres à la blacklis, pour plus de renseignement faites **/help blacklist_add**", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
     elif command == "clear":
@@ -1514,7 +1521,14 @@ async def help(ctx, command):
         embed.add_field(name="Utilisation", value="``/config_server``", inline=False)
         embed.set_footer(text=author, icon_url=author.avatar_url)
         await ctx.send(embed=embed, hidden=True)
-    
+    elif command == "blacklist_add":
+        author = ctx.author
+        embed= discord.Embed(title="Commande configuration", description="***/blacklist_add***",
+        color=color)
+        embed.add_field(name="A quoi sert cette commande ?", value="Cette commande permet d'ajouter des membres à la blacklist'", inline=False)
+        embed.add_field(name="Utilisation", value="``/blacklist_add``", inline=False)
+        embed.set_footer(text=author, icon_url=author.avatar_url)
+        await ctx.send(embed=embed, hidden=True)
     logging.info(f"{ctx.author} a utilisé la commande /help {command}")
 
 @bot.event

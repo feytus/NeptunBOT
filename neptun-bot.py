@@ -330,9 +330,9 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 1,raison))
     except KeyError:
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 1,raison)]]
-    async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
+    async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 1 {raison}\n")
-    with open(f'guilds/{guild.id}/config.json') as infile:
+    with open(f'guilds/{guild.id    }/config.json') as infile:
         data = json.load(infile)
     channel_logs = await bot.fetch_channel(data['channel_logs'])
     embed = discord.Embed(title=f"{user.name} a été **ban** !",
@@ -350,8 +350,22 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     embed_user.add_field(name="Raison", value=raison, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-    await user.send(embed=embed_user)
-    await ctx.guild.ban(user, reason=raison)
+    try:
+        await user.send(embed=embed_user)
+    except AttributeError:
+        await ctx.send(embed=discord.Embed(title="Erreur", 
+        description="Vous ne pouvez pas bannir un modérateur", 
+        color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+        hidden=True)
+        return
+    try:
+        await ctx.guild.ban(user, reason=raison)
+    except discord.errors.Forbidden:
+        await ctx.send(embed=discord.Embed(title="Erreur", 
+        description="Vous ne pouvez pas bannir un modérateur", 
+        color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+        hidden=True)
+        return
     logging.info(f"{ctx.author} a banni {user}, raison : {raison}") 
     await channel_logs.send(embed=embed)
     await ctx.send(embed=discord.Embed(description=f"Vous avez banni **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
@@ -371,19 +385,20 @@ async def ban(ctx, user: discord.User, *, raison="Aucune raison fournie"):
              ])
 @has_permissions(kick_members=True)
 @bot_has_permissions(send_messages=True, read_messages=True, kick_members=True)
-async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
+async def kick(ctx, user: discord.User, *, raison="Aucune raison fournie"):
     await ctx.defer(hidden=True)
     guild: discord.Guild=ctx.guild
+    reason=raison
     if await check_is_config(ctx.guild) is False:
         await ctx.send(embed=discord.Embed(title="Erreur", description=":warning: le bot n'est pas configuré, pour le configurer un administrateur doit exécuter la commande ``/config_server``", color=get_color(0xf54531, 0xf57231, 0xf53145)))
         logging.warning(f"{ctx.author} a utilisé une commande mais le bot n'est pas configuré")
     try:
         bot.warnings[ctx.guild.id][user.id][0] += 1
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 3,reason))
-    except KeyError:
+    except KeyError:    
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 3,reason)]]
     
-    async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
+    async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 3 {reason} Warn\n")
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
@@ -405,8 +420,18 @@ async def kick(ctx, user: discord.User, *, reason="Aucune raison fournie"):
     embed_user.add_field(name="Raison", value=reason, inline=True)
     embed_user.add_field(name="Modérateur", value=ctx.author.mention, inline=True)
     embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
-    await user.send(embed=embed_user)
-    await ctx.guild.kick(user, reason=reason)
+    try:
+        await user.send(embed=embed_user)
+    except AttributeError:
+        pass
+    try:
+        await ctx.guild.kick(user, reason=reason)
+    except discord.errors.Forbidden:
+        await ctx.send(embed=discord.Embed(title="Erreur", 
+        description="Vous ne pouvez pas kick un modérateur", 
+        color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+        hidden=True)
+        return
     await channel_logs.send(embed=embed)
     await ctx.send(embed=discord.Embed(description=f"Vous avez kick **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
     with open(f'guilds/{guild.id}/config.json') as infile:
@@ -543,8 +568,6 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 4,raison))
     except KeyError:
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 4,raison)]]
-
-    
     color = get_color(0xd459d9, 0x5973d9, 0xd95959)
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
@@ -574,8 +597,23 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
         embed.set_thumbnail(url=ctx.author.avatar_url)
-        await user.send(embed=embed_user)
-        await ctx.guild.ban(user, reason=raison)
+        try:
+            await user.send(embed=embed_user)
+        except AttributeError:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
+        try:
+            await ctx.guild.ban(user, reason=raison)
+        except discord.errors.Forbidden:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
+            return
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         await channel_logs.send(embed=embed)
@@ -606,8 +644,22 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
-        await ctx.guild.ban(user, reason=raison)
+        try:
+            await user.send(embed=embed_user)
+        except AttributeError:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
+        try:
+            await ctx.guild.ban(user, reason=raison)
+        except discord.errors.Forbidden:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         await channel_logs.send(embed=embed)
@@ -638,8 +690,22 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
-        await ctx.guild.ban(user, reason=raison)
+        try:
+            await user.send(embed=embed_user)
+        except AttributeError:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
+        try:
+            await ctx.guild.ban(user, reason=raison)
+        except discord.errors.Forbidden:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         await channel_logs.send(embed=embed)
@@ -670,8 +736,22 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
-        await ctx.guild.ban(user, reason=raison)
+        try:
+            await user.send(embed=embed_user)
+        except AttributeError:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
+        try:
+            await ctx.guild.ban(user, reason=raison)
+        except discord.errors.Forbidden:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         await channel_logs.send(embed=embed)
@@ -702,8 +782,22 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
             data = json.load(infile)
         embed_user.add_field(name="Discord", value=data['invite_link'], inline=True)
         embed_user.set_footer(text=f"Date • {datetime.datetime.now()}")
-        await user.send(embed=embed_user)
-        await ctx.guild.ban(user, reason=raison)
+        try:
+            await user.send(embed=embed_user)
+        except AttributeError:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
+        try:
+            await ctx.guild.ban(user, reason=raison)
+        except discord.errors.Forbidden:
+            await ctx.send(embed=discord.Embed(title="Erreur", 
+            description="Vous ne pouvez pas bannir un modérateur", 
+            color=get_color(0xf54531, 0xf57231, 0xf53145)), 
+            hidden=True)
+            return
         logging.info(f"{ctx.author} a banni temporairement {user} : {duration} {time}, raison : {raison}")
         await ctx.send(embed=discord.Embed(description=f"Vous avez banni temporairement **{user}** :white_check_mark:", color=0x34eb37), hidden=True)
         await channel_logs.send(embed=embed)
@@ -719,7 +813,7 @@ async def tempban(ctx, user: discord.User, duration: int, time: str, *, raison="
         embed.add_field(name="j", value="jour(s)", inline=True)
         embed.add_field(name="mois", value="mois", inline=True)
         await ctx.send(embed=embed, hidden=True)
-    async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
+    async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 4 {raison}\n")
 
 
@@ -796,7 +890,7 @@ async def tempmute(ctx, user: discord.User, duration: int, time: str, *, raison=
     except KeyError:
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 2,raison)]]
 
-    async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
+    async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 2 {raison}\n")
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
@@ -1080,7 +1174,7 @@ async def warn(ctx, user: discord.User, raison):
         bot.warnings[ctx.guild.id][user.id][1].append((ctx.author.id, 1,raison))
     except KeyError:
         bot.warnings[ctx.guild.id][user.id] = [1, [(ctx.author.id, 1,raison)]]
-    async with aiofiles.open(f"{ctx.guild.id}/sanctions.txt", mode="a") as file:
+    async with aiofiles.open(f"guilds/{guild.id}/sanctions.txt", mode="a") as file:
         await file.write(f"{user.id} {ctx.author.id} 1 {raison}\n")
     
     logging.info(f"{ctx.author} a warn {user}, raison : {raison}")
@@ -1266,10 +1360,9 @@ async def blacklist_add(ctx, user: discord.User, raison):
         pass
     else:
         await ctx.send(embed=discord.Embed(title="Erreur", 
-            description=f":warning: seul {feytus} peut ajouter des gens à la blacklist", 
+            description=f":warning: Seul {feytus} peut ajouter des gens à la blacklist", 
             color=get_color(0xf54531, 0xf57231, 0xf53145)), hidden=True)
         return
-    
     guild: discord.Guild=ctx.guild
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
@@ -1894,6 +1987,8 @@ async def on_error(event, *args, **kwargs):
         data= {}
         with open(f'guilds/{guild.id}/config.json', 'w') as outfile:
             json.dump(data, outfile, indent=4)
+    elif exc_type is AttributeError:
+        pass
     else:
         print(f"""
         exc_type: {exc_type}\n
@@ -1934,6 +2029,7 @@ async def on_slash_command_error(ctx, error: discord.errors):
         logging.warning(f"{ctx.author} a obtenu l'erreur : {error}")
     else:
         logging.warning(f"{ctx.author} a obtenu une erreur : {error}")
+
 
 @bot.event
 async def on_command_error(ctx, error):

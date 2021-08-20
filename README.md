@@ -1,11 +1,10 @@
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 ![GitHub repo size](https://img.shields.io/github/repo-size/feytus/neptunbot?style=for-the-badge&logo=appveyor)
-<a href="LICENSE"><img src="https://img.shields.io/github/license/breejs/bree.svg" alt="license" /></a>
+[![License](https://img.shields.io/github/license/feytus/neptunbot?style=for-the-badge)](https://github.com/feytus/NeptunBOT/blob/main/LICENSE)
 ___
 [![Invite - me](https://img.shields.io/badge/Invite-me-2295c7?style=for-the-badge&logo=discord&logoColor=white)](discord.com/oauth2/authorize?client_id=811977160067776522&permissions=-214438817&scope=applications.commands%20bot)
 [![Docs](https://img.shields.io/website?down_color=lightgrey&down_message=offline&style=for-the-badge&up_color=green&up_message=documentation&url=https%3A%2F%2Ffeytus.github.io%2F%23neptun)](https://feytus.gitbook.io/neptun-doc/)
-[![Docs](https://img.shields.io/github/license/feytus/neptunbot?style=for-the-badge)](https://github.com/feytus/NeptunBOT/blob/main/LICENSE)
-<br>
+<
 
 # Neptun BOT Documentation
 

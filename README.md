@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/github/license/feytus/neptunbot?style=for-the-badge)](https://github.com/feytus/NeptunBOT/blob/main/LICENSE)
 ___
 [![Invite - me](https://img.shields.io/badge/Invite-me-2295c7?style=for-the-badge&logo=discord&logoColor=white)](discord.com/oauth2/authorize?client_id=811977160067776522&permissions=-214438817&scope=applications.commands%20bot)
-[![Docs](img.shields.io/badge/WEBSITE-DOCUMENTATION-yellowgreen?style=for-the-badge)](https://feytus.gitbook.io/neptun-doc/)
+[![Docs](https://img.shields.io/badge/WEBSITE-DOCUMENTATION-green?style=for-the-badge)](https://feytus.gitbook.io/neptun-doc/)
 
 
 # Neptun BOT Documentation

@@ -26,7 +26,7 @@ from discord_slash import SlashCommand
 from discord_slash.model import ButtonStyle
 from dotenv import load_dotenv
 from discord_slash.utils.manage_commands import create_option, create_choice
-from discord_components import DiscordComponents, Button, Interaction, component
+from discord_components import SelectOption, DiscordComponents, Button, Interaction, component, Select
 from discord_slash.utils.manage_components import create_button, create_actionrow
 from discord_slash.model import ButtonStyle
 
@@ -1340,7 +1340,7 @@ async def config_server(ctx):
     except:
         pass
 
-
+"""
 @slash.slash(name="blacklist_add", description="Permet d'ajouter un membre à la blacklist publique", options=[
                 create_option(
                     name="user",
@@ -1384,6 +1384,94 @@ async def blacklist_add(ctx, user: discord.User, raison):
             channel_logs = await bot.fetch_channel(data['channel_logs'])
             await channel_logs.send(embed=embed_logs)
 
+
+@slash.slash(name="poll", description="Permet de créer un sondage dans un channel", options=[
+                create_option(
+                    name="Question",
+                    description="Entrez la question",
+                    option_type=3,
+                    required=True,
+                    value="question"),
+                create_option(
+                    name="durée",
+                    description="Entrez la durée du poll (en minute)",
+                    option_type=4,
+                    required=True,
+                    value="duration"),
+                create_option(
+                    name="choice1",
+                    description="Entrez le premier choix",
+                    option_type=3,
+                    required=True,
+                    value="choice1"),
+                create_option(
+                    name="choice2",
+                    description="Entrez le deuxieme choix",
+                    option_type=3,
+                    required=True,
+                    value="choice2"),
+                create_option(
+                    name="choice3",
+                    description="Entrez le troisieme choix",
+                    option_type=3,
+                    required=False,
+                    value="choice3"),
+                create_option(
+                    name="choice4",
+                    description="Entrez le quatrième choix",
+                    option_type=3,
+                    required=False,
+                    value="choice4"),
+                create_option(
+                    name="choice5",
+                    description="Entrez le cinquième choix",
+                    option_type=3,
+                    required=False,
+                    value="choice5"),
+                create_option(
+                    name="choice6",
+                    description="Entrez le sixième choix",
+                    option_type=3,
+                    required=False,
+                    value="choice6"),
+                create_option(
+                    name="choice7",
+                    description="Entrez le septième choix",
+                    option_type=3,
+                    required=False,
+                    value="choice7"),
+                create_option(
+                    name="choice8",
+                    description="Entrez le huitiième choix",
+                    option_type=3,
+                    required=False,
+                    value="choice8"),
+                    ])
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def poll(ctx, question, duration, *args):
+    await ctx.defer(hidden=True)
+    embed=discord.Embed(title="Sondage", descrption=f"**{question}**")
+    embed.add_field(name="Durée", value=f"{duration} minute(s)")
+    await ctx.send(
+        embed=embed,
+        components = [
+            SelectOption(label=None, value="coat", emoji="🥼"),
+        ])
+
+    interaction: Interaction = await bot.wait_for("button_click")
+    await interaction.channel.send(content = f"{interaction.interaction_id} has been clicked")
+"""
+
+@slash.slash(name="documentation", description="Link to my documentation")
+@bot_has_permissions(send_messages=True, read_messages=True)
+async def documentation(ctx):
+    ctx.defer(hidden=True)
+    embed=discord.Embed(title="Documentation", 
+    description="Link to my **documentation**\rhttps://feytus.gitbook.io/neptun-doc/",
+    color=get_color(0xedda5f, 0xedab5f, 0xbb76f5))
+    embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar_url)
+    embed.set_thumbnail(url=bot.user.avatar_url)
+    await ctx.send(embed=embed, hidden=True)
 
 @slash.slash(name="help", description="Permet d'obtenir des renseignements à propos des commandes", options=[
                 create_option(
@@ -1630,7 +1718,10 @@ async def on_button_click(interaction: Interaction):
     with open(f'guilds/{guild.id}/config.json') as infile:
         data = json.load(infile)
     message_custom_id = interaction.custom_id 
-    configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
+    try:
+        configserver_channel: TextChannel = await bot.fetch_channel(data['channel_config'])
+    except discord.errors.NotFound:
+        pass
     if message_custom_id== "yes_welcome_channel":
         await interaction.respond(embed=discord.Embed(
             title="Configuration du bot", 
@@ -1817,6 +1908,9 @@ async def on_button_click(interaction: Interaction):
         logging.info(f"{interaction.author} a terminé la configuration du bot")
         await asyncio.sleep(10)
         await interaction.channel.delete()
+    else:
+        pass
+
 
 # BOT EVENT FOR LOGS
 @bot.event

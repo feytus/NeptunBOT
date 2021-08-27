@@ -1253,7 +1253,7 @@ async def user_info(ctx, user: discord.Member):
     embed.add_field(name="ID", value=user.id, inline=True)
     embed.add_field(name="Roles sur le serveur", value=len(user.roles) - 1, inline=False)
     embed.add_field(name="Role le plus haut", value=user.top_role, inline=False)
-    if user.desktop_status is Status.online:
+    if user.raw_status is Status.online:
         status = ":green_circle: En ligne"
     elif user.desktop_status is Status.offline:
         status = ":black_circle: Hors ligne"
